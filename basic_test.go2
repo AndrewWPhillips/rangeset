@@ -33,7 +33,7 @@ func TestZero(t *testing.T) {
 
 // TestOne checks that a set with a single element has the right length
 func TestOne(t *testing.T) {
-	s := New(42)
+	s := Make(42)
 	Assertf(t, s.Len() == 1, "Set with one element had size %d", s.Len())
 }
 

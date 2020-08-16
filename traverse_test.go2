@@ -115,7 +115,7 @@ func TestIteratorAll(t *testing.T) {
 
 // TestIteratorCancel tests that cancelling an iteration stops sending elements and closes the chan
 func TestIteratorCancel(t *testing.T) {
-	in := New[traverseType](7, 42, 73, 86, 99)
+	in := Make[traverseType](7, 42, 73, 86, 99)
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := in.Iterator(ctx)
 	v, ok := <-ch

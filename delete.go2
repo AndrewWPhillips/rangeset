@@ -2,41 +2,6 @@ package rangeset
 
 type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
 
-/*
-// TODO: use bsearch for performance
-func (s *Set[T]) Delete(e T) {
-	set := *s
-	for idx, v := range set {
-		switch {
-		case e < v.b:
-			// The element is not in this (or previous) range
-			return
-		case e == v.b && e == v.t - 1:
-			// It matches a single elt range - remove the range
-			*s = set[:idx + copy(set[idx:], set[idx+1:])]
-			return
-		case e == v.b:
-			// The element to remove is at the start of this range
-			set[idx].b = e + 1
-			return
-		case e < v.t - 1:
-			// The element splits the current range into 2 parts
-			*s = append(set, Span[T]{})  // add empty element at end
-			// Note: realloc (in append) may now mean that *s != set
-			copy((*s)[idx+1:], (*s)[idx:])  // move ranges to make space to ...
-			(*s)[idx].t, (*s)[idx+1].b = e, e + 1
-			return
-		case e == v.t - 1:
-			// The element to remove is at end of this range
-			set[idx].t = e
-			return
-		}
-	}
-	// The element to remove is past the end of the last range
-	return
-}
-*/
-
 // Delete removes an element from the set
 // The set is unchanged if the element is not in the set
 // It has time complexity O(log r) where r is the number of ranges or O(log n) worst case.

@@ -33,7 +33,7 @@ var deleteData = map[string]struct {
 // the Delete() method).  It also tests converting a set to a string (using the String() method()).
 func TestTableDelete(t *testing.T) {
 	for name, data := range deleteData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		s.Delete(data.deleteElt)
 		got := s.String()
 		Assertf(t, got == data.expected, "Delete:%24s: expected %q got %q\n", name, data.expected, got)
@@ -114,7 +114,7 @@ var deleteRangeData = map[string]struct {
 // the DeleteRange() method).
 func TestTableDeleteRange(t *testing.T) {
 	for name, data := range deleteRangeData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		s.DeleteRange(data.bElt, data.tElt)
 		got := s.String()
 		Assertf(t, got == data.expected, "Delete Range:%24s: expected %q got %q\n", name, data.expected, got)

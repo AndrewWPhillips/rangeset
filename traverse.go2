@@ -15,9 +15,9 @@ func (s Set[T]) Iterate(f func(T)) {
 
 // Filter deletes elements from s for which f returns false.
 // Time complexity is O(n)
-// TODO look if bunching ranges befoer delete is faster (but would still be O(n))
+// TODO look if bunching ranges before delete is faster (but would still be O(n))
 func (s *Set[T]) Filter(f func(T) bool) {
-	toDelete := New[T]()
+	toDelete := Make[T]()
 	for _, v := range *s {
 		for e := v.b; e < v.t; e++ {
 			if !f(e) {

@@ -4,47 +4,6 @@ package rangeset
 
 type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
 
-/*
-// Add inserts a single element into the set
-// TODO: use bsearch() instead of doing linear search of the slice
-func (s *Set[T]) Add(e T) bool {
-	set := *s // get slice pointed to to simplify code
-	for idx, v := range set {
-		switch {
-		case e < v.b-1:
-			// Insert new range before the current one
-			*s = append(set, Span[T]{})
-			set = *s // it may have moved due to realloc
-			copy(set[idx+1:], set[idx:])
-			set[idx] = Span[T]{e, e + 1}
-			return true
-		case e == v.b-1:
-			// Just extend current range downwards
-			set[idx].b = e
-			return true
-		case e < v.t:
-			return false // already in the set
-		case e == v.t:
-			// Extend range up by 1, possibly joining to range above
-			if idx < len(set)-1 && e == set[idx+1].b-1 {
-				// New element joins the current and next range together
-				e = v.b                      // save beginning of current range
-				copy(set[idx:], set[idx+1:]) // move rest of the ranges down
-				set[idx].b = e               // restore beginning of current
-				*s = set[:len(set)-1]        // remove no longer needed end range
-			} else {
-				// Extend current range upwards
-				set[idx].t = e + 1
-			}
-			return true
-		}
-	}
-	// Append new range
-	*s = append(set, Span[T]{e, e + 1})
-	return true
-}
-*/
-
 // Add inserts a single element into the set
 // It returns true if added or false if it already existed in the set
 // It has time complexity O(log r) where r is the number of ranges or O(log n) worst case.
@@ -52,7 +11,7 @@ func (s *Set[T]) Add(e T) bool {
 	idx := s.bsearch(e)
 	//assert(idx >= 0 && idx <= len(*s))
 	if idx == 0 || e > (*s)[idx-1].t {
-		// New element is before range [idx] and after range [idx-1] (+ not just past end)
+		// Make element is before range [idx] and after range [idx-1] (+ not just past end)
 		if idx < len(*s) && e == (*s)[idx].b-1 {
 			// Extend range [idx] down by one
 			(*s)[idx].b = e
@@ -66,9 +25,9 @@ func (s *Set[T]) Add(e T) bool {
 	}
 	// assert(idx > 0)
 	if e == (*s)[idx-1].t {
-		// New element is just past the end of range [idx-1]
+		// Make element is just past the end of range [idx-1]
 		if idx < len(*s) && e == (*s)[idx].b-1 {
-			// New element joins range [idx-1] and [idx] together
+			// Make element joins range [idx-1] and [idx] together
 			e = (*s)[idx-1].b              // save beginning of previous range
 			copy((*s)[idx-1:], (*s)[idx:]) // move rest of the ranges down
 			(*s)[idx-1].b = e              // restore beginning of current
@@ -81,53 +40,6 @@ func (s *Set[T]) Add(e T) bool {
 	}
 	return false // e is already in range [idx-1]
 }
-
-/*
-// AddRange inserts a range of values into the set
-// TODO: use bsearch() instead of doing linear search of the slice
-func (s *Set[T]) AddRange(b, t T) {
-	if t <= b {
-		return // nothing needs to be added
-	}
-	set := *s // get slice pointed to, to simplify code
-	for idx, v := range set {
-		if b > v.t {
-			continue
-		}
-		if t < v.b {
-			// Need to insert a range here
-			*s = append(set, Span[T]{})
-			set = *s // it may have moved due to realloc
-			copy(set[idx+1:], set[idx:])
-			set[idx] = Span[T]{b, t}
-			return
-		}
-
-		// Now adjust and merge ranges from this point on
-		if b < v.b {
-			set[idx].b = b // move down bottom of first range
-		}
-		var mIdx int
-		for mIdx = idx; mIdx < len(set)-1; mIdx++ {
-			if t < set[mIdx+1].b {
-				break
-			}
-		}
-		if t > set[mIdx].t {
-			set[mIdx].t = t // move up top of last range
-		}
-
-		// if the new range joined existing ranges we need to compress the slice
-		b = set[idx].b
-		copy(set[idx:], set[mIdx:])
-		set[idx].b = b
-		*s = set[:len(set)-(mIdx-idx)]
-		return
-	}
-	// Append new range after end of all existing ranges
-	*s = append(set, Span[T]{b, t})
-}
-*/
 
 // AddRange inserts a range of values into the set
 // The range is specified using asymmetric bounds: b (1st param) is the lowest element

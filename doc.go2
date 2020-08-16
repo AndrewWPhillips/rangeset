@@ -17,8 +17,8 @@
 //
 // Creating sets
 //
-//  s := rangeset.New[int]()           // create an empty set of ints
-//  s := rangeset.New[byte](1, 2, 7)   // create a set of bytes with 3 elements
+//  s := rangeset.Make[int]()           // create an empty set of ints
+//  s := rangeset.Make[byte](1, 2, 7)   // create a set of bytes with 3 elements
 //  s2 := s.Copy()                     // make a (deep) copy of a set
 //
 // Adding Elements

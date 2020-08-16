@@ -40,26 +40,8 @@ func intToString[type T Element](i T) string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
-//var signedIntMin = map[uintptr]int64 {
-//	1: math.MinInt8,
-//	2: math.MinInt16,
-//	4: math.MinInt32,
-//	8: math.MinInt64,
-//}
-//
-//// minInt returns the smallest allowed integer for an element (signed/unsigned integer)
-//// TODO: find a way to do this (ie, without using unsafe.Sizeof)
-//func minInt[type T Element]() T {
-//	zero := T(0)
-//	if zero - 1 > 0 {
-//		// unsigned integer min has all bits off (ie zero)
-//		return zero
-//	}
-//	return T(signedIntMin[unsafe.Sizeof(T(0))])
-//}
-
 // minInt returns the smallest allowed integer for its type param. (signed/unsigned integer)
-// Thanks to Robert Greisemer for writing this (see https://github.com/golang/go/issues/40301)
+// Thanks to Robert Greisemer for this (see https://github.com/golang/go/issues/40301)
 func minInt[type T Element]() T {
 	if isUnsigned[T]() {
 		return 0 // unsigned int types all start with zero

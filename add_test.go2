@@ -50,7 +50,7 @@ var addData = map[string]struct {
 //              addData map.  It also tests the String() method.
 func TestTableAdd(t *testing.T) {
 	for name, data := range addData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		gotResult := s.Add(data.addElt)
 		Assertf(t, gotResult == data.expResult, "%20s: expected result %t, got %t", name, data.expResult, gotResult)
 		Assertf(t, len(s) == len(data.expected), "%20s: expected %d ranges, got %d", name, len(data.expected), len(s))
@@ -66,7 +66,7 @@ func TestTableAdd(t *testing.T) {
 // String() method and the NewFromString() and Equal() functions.
 func TestRoundTrip1(t *testing.T) {
 	for name, data := range addData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		got, err := NewFromString[AddType](s.String())
 		Assertf(t, err == nil, "%20s: Round trip string parsing expected no error, got %v", name, err)
 		same := Equal(s, got)
@@ -108,7 +108,7 @@ func TestAddReallocMiddle(t *testing.T) {
 // TestAddReallocEnd checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the end of the slice
 func TestAddReallocEnd(t *testing.T) {
-	s := New[AddType](10)
+	s := Make[AddType](10)
 	s.Add(22)
 	s.Add(24)
 	s.Add(26)
@@ -162,7 +162,7 @@ var rangeData = map[string]struct {
 // the AddRange() method).  It also tests converting a set to a string (using the String() method()).
 func TestTableAddRange(t *testing.T) {
 	for name, data := range rangeData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		s.AddRange(data.bot, data.top)
 		got := s.String()
 		Assertf(t, got == data.expected, "%24s: expected %q got %q\n", name, data.expected, got)
@@ -174,7 +174,7 @@ func TestTableAddRange(t *testing.T) {
 // String() method and the NewFromString() and Equal() functions.
 func TestRoundTrip2(t *testing.T) {
 	for name, data := range rangeData {
-		s := New(data.elts...)
+		s := Make(data.elts...)
 		got, _ := NewFromString[AddType](s.String())
 		same := Equal(s, got)
 		Assertf(t, same, "%20s: After round trip comparing %q: expected true, got %t", name, s.String(), same)
@@ -215,7 +215,7 @@ func TestAddRangeReallocMiddle(t *testing.T) {
 // TestAddRangeReallocEnd checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the end of the slice
 func TestAddRangeReallocEnd(t *testing.T) {
-	s := New[AddType](10)
+	s := Make[AddType](10)
 	s.AddRange(22, 23)
 	s.AddRange(24, 25)
 	s.AddRange(26, 27)

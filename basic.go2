@@ -23,9 +23,8 @@ type (
 )
 
 // New creates a new set optionally taking initial element(s)
-// TODO: rename New to Make for compatibility with src\cmd\go2go\testdata\go2path\src\sets
-// TODO: check if sorting elems (copy of it) could improve perf. for large len(elems)
-func New[type T Element](elems ...T) Set[T] {
+// TODO: check if sorting elems (in copy of it) could improve perf. for large len(elems)
+func Make[type T Element](elems ...T) Set[T] {
 	s := make(Set[T], 0, len(elems))
 	for _, v := range elems {
 		_ = s.Add(v)
@@ -34,7 +33,7 @@ func New[type T Element](elems ...T) Set[T] {
 }
 
 // NewFromRange creates a new set by specifying an initial range of elements
-// TODO: remove this since we can create use New[T]() and AddRange()?
+// TODO: remove this since we can create use Make[T]() and AddRange()?
 func NewFromRange[type T Element](b, t T) Set[T] {
 	if t <= b {
 		//panic("Invalid range in NewFromRange")
