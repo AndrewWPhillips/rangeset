@@ -1,0 +1,141 @@
+package rangeset
+
+// basic.go2 implements basic functions such as creating range sets, checking if a set contains
+// an element, number of elements, adding (union), subtraction, intersection etc.
+
+//contract (
+//	// Element defines the allowed types for rangeset elements
+//	// They must be integer types eg. so we can step through and get the number of elements
+//	// in each "range" (Span) - eg for the Len() method.
+//	Element(T) {
+//		T int8, int16, int32, int64, int,
+//			uint8, uint16, uint32, uint64, uint //, uintptr
+//	}
+//)
+type Element interface {
+		type int8, int16, int32, int64, int,
+			uint8, uint16, uint32, uint64, uint //, uintptr
+}
+
+type (
+	Span[type T Element] struct	{ b, t T } // one "range" (bottom, top+1)
+	Set[type T Element] []Span[T]          // a set is just a slice of ranges
+)
+
+// New creates a new set optionally taking initial element(s)
+// TODO: rename New to Make for compatibility with src\cmd\go2go\testdata\go2path\src\sets
+// TODO: check if sorting elems (copy of it) could improve perf. for large len(elems)
+func New[type T Element](elems ...T) Set[T] {
+	s := make(Set[T], 0, len(elems))
+	for _, v := range elems {
+		_ = s.Add(v)
+	}
+	return s
+}
+
+// NewFromRange creates a new set by specifying an initial range of elements
+// TODO: remove this since we can create use New[T]() and AddRange()?
+func NewFromRange[type T Element](b, t T) Set[T] {
+	if t <= b {
+		//panic("Invalid range in NewFromRange")
+		// Return an empty set (this is consistent with for loop where end < start)
+		return nil
+	}
+	return append(make(Set[T], 0, 1), Span[T]{b, t})
+}
+
+// Length returns the number of elements and number of ranges in the set.
+// It has time complexity of O(r) where r is the number of ranges, O(n) in the worst case.
+// TODO: this could be made O(1) by caching/updating the length but my gut says to keep it this way
+func (s Set[T]) Length() (length uint64, spans int) {
+	spans = len(s)
+	for _, r := range s {
+		// assert(r.t > r.b)
+		length += uint64(r.t - r.b)
+	}
+	return
+}
+
+// Len returns the number of elements, which is undefined if it's more than the largest int.
+// It has time complexity of O(r) where r is the number of ranges, and O(n) in the worst case.
+// Note: As sets are stored using ranges it is easy to have huge sets, where the number of
+// elements is too large for an int.  For portability (in some implementations ints are 32-bits),
+//  if your sets can have 2^31 or more elements then use the Length() method above.
+func (s Set[T]) Len() int {
+	length, spans := s.Length()
+	// TODO: decide is we want to panic, return error or just leave as non-portable (wraps on overflow)
+	if length > uint64(^uint(0)>>1) || length == 0 && spans > 0 {
+		// TODO: add test for this situation
+		panic("Integer overflow getting number of set elements")
+	}
+	return int(length)
+}
+
+// Contains tests whether a set contains an element
+// It has time complexity O(log r) where r is the number of ranges of the set (since it
+// does a binary search over the ranges).  In the worst case the is O(log n).
+func (s Set[T]) Contains(e T) bool {
+	idx := s.bsearch(e)
+	return idx > 0 && e < s[idx-1].t
+}
+
+// Values returns all the values in the set as a slice (in numeric order).
+// WARNING: if your range set contains large ranges this may take a
+// long time and return a slice with a large number of elements.
+func (s Set[T]) Values() []T {
+	retval := make([]T, 0, s.Len())
+	for _, v := range s {
+		for e := v.b; e < v.t; e++ {
+			retval = append(retval, e)
+		}
+	}
+	return retval
+}
+
+// Spans returns all the ranges of the set as a slice of "Span" structures.
+// Note that these use asymmetric ranges where the t (top) field is one more than the
+// last element in the range. The Spans are sorted within the slice and do not overlap.
+func (s Set[T]) Spans() []Span[T] {
+	retval := make([](Span[T]), 0, len(s))
+	for _, v := range s {
+		retval = append(retval, v)
+	}
+	return retval
+}
+
+//func (s Set[T]) Copy() Set[T] {
+//	retval := make(Set[T], 0, len(s))
+//	for _, v := range s {
+//		retval = append(retval, v)
+//	}
+//	return retval
+//}
+
+// Copy makes a copy of a set
+func (s Set[T]) Copy() Set[T] {
+	return Set[T](s.Spans())
+}
+
+// AddSet finds the union of s with s2 (ie, adds all the elements of s2 to s)
+func (s *Set[T]) AddSet(s2 Set[T]) {
+	for _, v := range s2 {
+		s.AddRange(v.b, v.t)
+	}
+}
+
+// SubSet removes all elements of s2 from s
+func (s *Set[T]) SubSet(s2 Set[T]) {
+	for _, v := range s2 {
+		s.DeleteRange(v.b, v.t)
+	}
+}
+
+// Intersect finds the intersection of s with s2 (ie, deletes from s any elts not in s2)
+func (s *Set[T]) Intersect(s2 Set[T]) {
+	bDel := minInt[T]()
+	for _, v := range s2 {
+		s.DeleteRange(bDel, v.b)
+		bDel = v.t
+	}
+	s.DeleteRange(bDel, maxInt[T]())
+}

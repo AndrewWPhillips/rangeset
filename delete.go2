@@ -1,0 +1,111 @@
+package rangeset
+
+type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
+
+/*
+// TODO: use bsearch for performance
+func (s *Set[T]) Delete(e T) {
+	set := *s
+	for idx, v := range set {
+		switch {
+		case e < v.b:
+			// The element is not in this (or previous) range
+			return
+		case e == v.b && e == v.t - 1:
+			// It matches a single elt range - remove the range
+			*s = set[:idx + copy(set[idx:], set[idx+1:])]
+			return
+		case e == v.b:
+			// The element to remove is at the start of this range
+			set[idx].b = e + 1
+			return
+		case e < v.t - 1:
+			// The element splits the current range into 2 parts
+			*s = append(set, Span[T]{})  // add empty element at end
+			// Note: realloc (in append) may now mean that *s != set
+			copy((*s)[idx+1:], (*s)[idx:])  // move ranges to make space to ...
+			(*s)[idx].t, (*s)[idx+1].b = e, e + 1
+			return
+		case e == v.t - 1:
+			// The element to remove is at end of this range
+			set[idx].t = e
+			return
+		}
+	}
+	// The element to remove is past the end of the last range
+	return
+}
+*/
+
+// Delete removes an element from the set
+// The set is unchanged if the element is not in the set
+// It has time complexity O(log r) where r is the number of ranges or O(log n) worst case.
+func (s *Set[T]) Delete(e T) {
+	idx := s.bsearch(e)
+	if idx == 0 || e >= (*s)[idx-1].t {
+		return // outside any existing range
+	}
+	if e == (*s)[idx-1].b && e == (*s)[idx-1].t - 1 {
+		// Element matches a single elt range, so delete it
+		*s = (*s)[:idx-1 + copy((*s)[idx-1:], (*s)[idx:])]
+		return
+	}
+	if e > (*s)[idx-1].b && e < (*s)[idx-1].t - 1 {
+		// Inside an existing range, so split it
+		*s = append(*s, Span[T]{})  // add empty element at end
+		copy((*s)[idx:], (*s)[idx-1:])  // move ranges to make space to ...
+		(*s)[idx-1].t, (*s)[idx].b = e, e + 1
+		return
+	}
+	if e == (*s)[idx-1].b {
+		(*s)[idx-1].b = e + 1
+		return
+	}
+	//assert(e == (*s)[idx-1].t - 1)
+	(*s)[idx-1].t = e
+}
+
+// DeleteRange removes a range of elements from the set
+func (s *Set[T]) DeleteRange(b, t T) {
+	if t <= b {
+		return  // nothing to delete
+	}
+
+	// Work out which "range" of Spans to delete.  Note that the range given by
+	// [b,t) may overlap zero or more spans or even be entirely within a span.
+	bIdx, tIdx := s.bsearch(b), s.bsearch(t)
+	//assert(bIdx >= 0 && bIdx <= len(*s) && tIdx >= 0 && tIdx <= len(*s))
+	if bIdx > 0 && b == (*s)[bIdx-1].b {
+		bIdx-- // we don't need to keep any of the bottom Span
+	}
+	if tIdx > 0 && t < (*s)[tIdx-1].t {
+		tIdx-- // we need to keep some of the top Span
+	}
+
+	// At this point the number of Spans to be deleted is given by tIdx-bIdx which can be
+	// -1 (Span to be inserted), 0 (only Span ends to be adjusted), 1, ... up to len(*s).
+
+	// Check for situation where the deleted range is entirely within the span with index tIdx
+	if tIdx < bIdx {
+		//assert(bIdx == tIdx + 1, "tIdx should only be one less than bIdx")
+		// Split an existing span in two - insert a new span and adjust the ends
+		*s = append(*s, Span[T]{})
+		copy((*s)[bIdx:], (*s)[tIdx:])
+		(*s)[bIdx].b = t  // bottom of above
+		(*s)[tIdx].t = b  // top of below
+		return
+	}
+
+	//assert(tIdx >= bIdx)
+	// Delete all the spans we don't need
+	copy((*s)[bIdx:], (*s)[tIdx:])
+	*s = (*s)[:len(*s) - (tIdx-bIdx)]
+
+	// Adjust the ends of kept adjacent Spans if necessary
+	if bIdx < len(*s) && t > (*s)[bIdx].b {
+		(*s)[bIdx].b = t
+	}
+	if bIdx > 0 && b < (*s)[bIdx-1].t {
+		(*s)[bIdx-1].t = b
+	}
+}

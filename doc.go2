@@ -1,0 +1,55 @@
+// Package rangeset implement a "set" container that uses ranges to efficiently store and
+// manipulate common types of large sets.  Due to it's use of ranges the type parameter (the
+// set's element type) must be orderable (ie support < operation etc) and also support
+// incrementation (++ operation).  Hence the only element types that can currently be used
+// are the integers (int, uint, byte, int64, etc).
+//
+// It is similar to the example go2go "sets" package (src\cmd\go2go\testdata\go2path\src\sets in
+// Go source repo) but has some pros and cons.  For many common uses of sets (ie those with large
+// contiguous ranges) it can be much more space efficient.  On the other hand, adding, deleting,
+// and finding elements has time complexity of O(log r), where r is the number of ranges, and
+// O(log n) in the worst case, but can still be faster even though the example "sets" package
+// has time complexity of O(1).
+//
+// Apart from performance benefits, it also has the advantage that the elements are ordered (eg
+// the Values() method returns the elements in order. It also has methods for serialising and
+// deserialising sets as strings. A useful method is to get all the ranges of the set.
+//
+// Creating sets
+//
+//  s := rangeset.New[int]()           // create an empty set of ints
+//  s := rangeset.New[byte](1, 2, 7)   // create a set of bytes with 3 elements
+//  s2 := s.Copy()                     // make a (deep) copy of a set
+//
+// Adding Elements
+//
+//  s.Add(42)                          // returns false if elt already present
+//  s.AddRange('a', 'z'+1)             // add a range (using asymmetric bounds)
+//  s2.AddSet(s)                       // s2 becomes the union of s2 and s
+//
+// Deleting Elements
+//
+//  s.Delete(42)
+//  s.DeleteRange(1, 11)               // delete elements 1 to 10 (inclusive)
+//  s2.SubSet(s)                       // remove from s2 all the elements of s (if present)
+//
+// Getting Elements
+//
+//  b := s.Contains(42)                // returns true if element is present
+//  all := s.Values()                  // returns a slice with all elements in the set (in order)
+//  all := s.Spans()                   // returns a slice of "Spans" representing all ranges in the set
+//
+// Operations (see also AddSet above, which performs a set union)
+//
+//  s2.Intersect(s)                    // s2 becomes the intersection of s2 and s
+//  b := rangeset.Equal(s, s2)         // returns true if 2 sets are identical
+//  s := rangeset.Union(s1, s2, ...)   // returns a new set that is the union of 1 or more sets
+//  s := rangeset.Intersect(s1,s2,...) // returns a set that's the intersection of 1 or more sets
+//
+// Iterating (see also Values above, which returns a slice of all elements)
+//
+//  s.Iterate(f)                       // calls the function f on each element of the set
+//  s.Filter(f)                        // call f on each lement and delets the element if f() return false
+//  s.Iterator(ctx)                    // returns a chan that is sent the element (in order)
+//
+package rangeset

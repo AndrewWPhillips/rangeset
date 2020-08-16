@@ -1,0 +1,51 @@
+package rangeset
+
+// traverse.go2 has methods to process the elements of a set
+
+import "context"
+
+// Iterate calls f on every element in the set.
+func (s Set[T]) Iterate(f func(T)) {
+	for _, v := range s {
+		for e := v.b; e < v.t; e++ {
+			f(e)
+		}
+	}
+}
+
+// Filter deletes elements from s for which f returns false.
+// Time complexity is O(n)
+// TODO look if bunching ranges befoer delete is faster (but would still be O(n))
+func (s *Set[T]) Filter(f func(T) bool) {
+	toDelete := New[T]()
+	for _, v := range *s {
+		for e := v.b; e < v.t; e++ {
+			if !f(e) {
+				toDelete.Add(e) // keep track of elts to delete
+			}
+		}
+	}
+	s.SubSet(toDelete) // delete the elts
+}
+
+// Iterator returns a channel that receives the elements of the set in order.
+// To terminate the go-routine before all elements have been seen, cancel the
+// context (first parameter to the method).  Note that after the context is
+// canceled another element *may* be seen on the chan before it is closed, so
+// you need to keep reading until it's closed to avoid a goroutine leak.
+func (s Set[T]) Iterator(ctx context.Context) <-chan T {
+	r := make(chan T)
+	go func(ch chan<- T) {
+		defer close(ch)
+		for _, v := range s {
+			for e := v.b; e < v.t; e++ {
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- e:
+				}
+			}
+		}
+	}(r)
+	return r
+}

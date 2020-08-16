@@ -1,0 +1,129 @@
+package rangeset  // ATM we can't do external tests using from rangeset_test
+
+import (
+	"context"
+	"testing"
+)
+
+type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
+
+type traverseType int  // ATM we seem to need a diff. element type in each test file
+
+// traverseData is for table-driven tests of Iterate and Filter methods
+var traverseData = map[string]struct {
+	in string
+	evenCount int
+}{
+	"Empty": {"{}", 0},
+	"One": {"{1}", 0},
+	"Two": {"{2}", 1},
+	"Odds": {"{1,3,5,7,9,11,13,15,17,19}", 0},
+	"Evens": {"{2,4,6,8,10,12,14,16,18,20}", 10},
+	"Both": {"{1:20}", 10},
+	"Both2": {"{2:20}", 10},
+	"Range1A": {"{1,4:5}", 1},
+	"Range1B": {"{1,4:6}", 2},
+	"Range1C": {"{1,4:7}", 2},
+	"Range1D": {"{1,4:8}", 3},
+	"Range2A": {"{2,4:5}", 2},
+	"Range2B": {"{2,4:6}", 3},
+	"Range2C": {"{2,4:7}", 3},
+	"Range2D": {"{2,4:8}", 4},
+	"Range3A": {"{0:3,5}", 2},
+	"Range3B": {"{0:3,5:6}", 3},
+	"Range3C": {"{0:3,5:7}", 3},
+	"Range3D": {"{0:3,5:8}", 4},
+}
+
+// TestIterateMethod tests that Iterate calls the function on every element using opData.union set
+func TestIterateMethod(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		got := make([]traverseType, 0, in.Len())
+		in.Iterate(func(v traverseType) { got = append(got, v) })
+		values := in.Values()
+		Assertf(t, len(got) == len(values), "Iterate: %20s: expected %d calls, got %d\n",
+			name, len(values), len(got))
+		for idx, v := range got {
+			Assertf(t, v == values[idx], "Iterate: %20s: at position %d expected %v, got %v",
+				name, idx, values[idx], v)
+		}
+	}
+}
+
+// TestFilterNone tests the Filter method keeping all elements
+func TestFilterNone(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		origLen := in.Len()
+		in.Filter(func(v traverseType) bool  { return true }) // keep all elts
+		Assertf(t, in.Len() == origLen, "FilterNone: %20s: expected %d elements remaining, got %d\n",
+			name, origLen, in.Len())
+	}
+}
+
+// TestFilterAll tests the Filter method removing all elements
+func TestFilterAll(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		in.Filter(func(v traverseType) bool  { return false }) // keep no elts
+		Assertf(t, in.Len() == 0, "FilterAll: %20s: expected no elements remaining, got %d\n",
+			name, in.Len())
+	}
+}
+
+// TestFilterOdd tests the Filter method by removing all odd elements
+func TestFilterOdd(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		in.Filter(func(v traverseType) bool  { return v%2 == 0 }) // keep even elts
+		Assertf(t, in.Len() == data.evenCount,
+			"FilterOdd: %20s: expected %d even elements remaining, got %d\n",
+			name, data.evenCount, in.Len())
+	}
+}
+
+// TestFilterEven tests the Filter method by removing all even elements
+func TestFilterEven(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		origLen := in.Len()
+		in.Filter(func(v traverseType) bool  { return v%2 != 0 }) // keep odd elts
+		Assertf(t, in.Len() == origLen - data.evenCount,
+			"FilterEven: %20s: expected %d odd elements remaining, got %d\n",
+			name, origLen - data.evenCount, in.Len())
+	}
+}
+
+// TestIteratorAll tests that the chan returned by the Iterator method sends all elements
+func TestIteratorAll(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		got := make([]traverseType, 0, in.Len())
+		for v := range in.Iterator(context.Background()) {
+			got = append(got, v)
+		}
+		values := in.Values()
+		Assertf(t, len(got) == len(values), "IteratorAll: %20s: expected %d calls, got %d\n",
+			name, len(values), len(got))
+		for idx, v := range got {
+			Assertf(t, v == values[idx], "IteratorAll: %20s: at position %d expected %v, got %v",
+				name, idx, values[idx], v)
+		}
+	}
+}
+
+// TestIteratorCancel tests that cancelling an iteration stops sending elements and closes the chan
+func TestIteratorCancel(t *testing.T) {
+	in := New[traverseType](7, 42, 73, 86, 99)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := in.Iterator(ctx)
+	v, ok := <-ch
+	Assertf(t, ok, "IteratorCancel: Expected initial channel read status to be true, got %v\n", ok)
+	Assertf(t, v == 7, "IteratorCancel: Expected initial channel value to be 7, got %v\n", v)
+	cancel()
+	// Note that after canceling the context we may or may not get a final value before the chan is closed
+	_, _ = <-ch
+	_, ok = <-ch
+	Assertf(t, !ok, "IteratorCancel: After cancel expected read status to be false, got %t\n", ok)
+}

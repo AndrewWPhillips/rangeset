@@ -1,0 +1,47 @@
+package rangeset
+
+// op.go2 has functions to implement set operations like union, etc
+
+// TODO: check what makes sense for no sets (eg should union of no sets panic?)
+
+// Equal compares two sets
+// TODO: extend to compare more than 2 sets?
+func Equal[type T Element](s1, s2 Set[T]) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for idx := 0; idx < len(s1); idx++ {
+		if s1[idx].b != s2[idx].b || s1[idx].t != s2[idx].t {
+			return false
+		}
+	}
+	return true
+}
+
+// Union finds the union of zero or more sets and returns a new set
+func Union[type T Element](sets ...Set[T]) Set[T] {
+	if len(sets) == 0 {
+		return Set[T]{} // return empty set
+	}
+	// Copy one set and add (union) all the other sets to it
+	// TODO: check if copying largest set then merging others is faster
+	retval := sets[0].Copy()
+	for _, other := range sets[1:] {
+		retval.AddSet(other)
+	}
+	return retval
+}
+
+// Intersect finds the intersection of zero or more sets, returning a new set
+func Intersect[type T Element](sets ...Set[T]) Set[T] {
+	if len(sets) == 0 {
+		return Set[T]{} // return empty set
+	}
+
+	retval := sets[0].Copy()
+	for _, other := range sets[1:] {
+		retval.Intersect(other)
+	}
+
+	return retval
+}

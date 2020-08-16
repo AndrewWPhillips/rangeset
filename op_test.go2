@@ -1,0 +1,150 @@
+package rangeset
+
+import "testing"
+
+// opData provides table data for testing various operations: Union(), Intersect(), etc
+var opData = map[string]struct {
+	in               []string  // zero or more sets to be combined (intersected, etc)
+	union, intersect string
+	sub              string
+}{
+	"Empty0":     {[]string{}, "{}", "{}", "{}"},
+	"Empty1":     {[]string{"{}"}, "{}", "{}", "{}"},
+	"Empty2":     {[]string{"{}", "{}"}, "{}", "{}", "{}"},
+	"Single1":    {[]string{"{1}"}, "{1}", "{1}", "{1}"},
+	"Single2":    {[]string{"{1}", "{1}"}, "{1}", "{1}", "{}"},
+	"Mult1":      {[]string{"{1,3,5}"}, "{1,3,5}", "{1,3,5}", "{1,3,5}"},
+	"Mult2":      {[]string{"{1,3,5}", "{7,9}"}, "{1,3,5,7,9}", "{}", "{1,3,5}"},
+	"EmptyAdd":   {[]string{"{}", "{1}"}, "{1}", "{}", "{}"},
+	"EmptyAddR1": {[]string{"{}", "{1:2}", "{3:4}"}, "{1:4}", "{}", "{}"},
+	"EmptyAddR2": {[]string{"{}", "{1}", "{3:4}"}, "{1,3:4}", "{}", "{}"},
+	"3Adj":       {[]string{"{1}", "{2}", "{3}"}, "{1:3}", "{}", "{1}"},
+	"3Sep":       {[]string{"{1}", "{3}", "{5}"}, "{1,3,5}", "{}", "{1}"},
+	"SepRanges":  {[]string{"{1:5}", "{7:8}"}, "{1:5,7:8}", "{}", "{1:5}"},
+	"Touch":      {[]string{"{1:5}", "{6:8}"}, "{1:8}", "{}", "{1:5}"},
+	"Subset":     {[]string{"{1:5}", "{2:4}"}, "{1:5}", "{2:4}", "{1,5}"},
+	"Subset2":    {[]string{"{1:5}", "{2:4}", "{3}"}, "{1:5}", "{3}", "{1,5}"},
+	"Overlap1":   {[]string{"{1:5}", "{4:8}"}, "{1:8}", "{4:5}", "{1:3}"},
+	"Overlap2":   {[]string{"{1:5}", "{4:8}", "{8:9}"}, "{1:9}", "{}", "{1:3}"},
+	"SubLap":     {[]string{"{1:5}", "{3:4}", "{2:9}"}, "{1:9}", "{3:4}", "{1}"},
+	"SubLap2":    {[]string{"{1:5}", "{3:4}", "{3:9}"}, "{1:9}", "{3:4}", "{1:2}"},
+	"3SubSep":    {[]string{"{1:5}", "{2:4}", "{7:8}"}, "{1:5,7:8}", "{}", "{1,5}"},
+	"3SubSep2":   {[]string{"{1:5}", "{7:8}", "{2:4}"}, "{1:5,7:8}", "{}", "{1,5}"},
+	"3LapSep":    {[]string{"{1:5}", "{5:6}", "{8:9}"}, "{1:6,8:9}", "{}", "{1:4}"},
+	"3LapSep2":   {[]string{"{1:5}", "{8:9}", "{5:6}"}, "{1:6,8:9}", "{}", "{1:4}"},
+	"3Way":       {[]string{"{4,7}", "{1,7}", "{1,4}"}, "{1,4,7}", "{}", "{}"},
+}
+
+// TestUnionFunction performs a union of opData table's "in" sets and compares to "union" set
+func TestUnionFunction(t *testing.T) {
+	for name, data := range opData {
+		var sets []Set[uint]
+		expected, _ := NewFromString[uint](data.union)
+
+		for _, str := range data.in {
+			s, _ := NewFromString[uint](str)
+			sets = append(sets, s)
+		}
+		got := Union(sets...)
+		Assertf(t, Equal(got, expected), "        Union: %20s: expected %q got %q\n",
+			name, expected, got)
+
+		// Reverse the order and check we get the same result
+		sets = nil
+		for idx := len(data.in); idx > 0; idx-- {
+			s, _ := NewFromString[uint](data.in[idx-1])
+			sets = append(sets, s)
+		}
+		got = Union(sets...)
+		Assertf(t, Equal(got, expected), "Reverse Union: %20s: expected %q got %q\n",
+			name, expected, got)
+	}
+}
+
+// TestIntersectFunction performs the intersection of opData table's "in" sets and compares to "intersect" set
+func TestIntersectFunction(t *testing.T) {
+	for name, data := range opData {
+		var sets []Set[uint]
+		expected, _ := NewFromString[uint](data.intersect)
+
+		for _, str := range data.in {
+			s, _ := NewFromString[uint](str)
+			sets = append(sets, s)
+		}
+		got := Intersect(sets...)
+		Assertf(t, Equal(got, expected), "For Intersect: %20s: expected %q got %q\n",
+			name, expected, got)
+
+		// Reverse the order and check we get the same result
+		sets = nil
+		for idx := len(data.in); idx > 0; idx-- {
+			s, _ := NewFromString[uint](data.in[idx-1])
+			sets = append(sets, s)
+		}
+		got = Intersect(sets...)
+		Assertf(t, Equal(got, expected), "Rev Intersect: %20s: expected %q got %q\n",
+			name, expected, got)
+	}
+}
+
+// TestCopyMethod checks copying of a set using the "union" field of the above opData table
+func TestCopyMethod(t *testing.T) {
+	for name, data := range opData {
+		orig, _ := NewFromString[uint](data.union)
+		got := orig.Copy()
+		Assertf(t, Equal(orig, got), " Set Copy: %20s: copying %q got %q\n",
+			name, orig, got)
+	}
+}
+
+// TestIntersectMethod tests the Intersect method
+func TestIntersectMethod(t *testing.T) {
+	for name, data := range opData {
+		if len(data.in) == 0 {
+			continue
+		}
+		got, _ := NewFromString[uint](data.in[0])
+		for idx := 1; idx < len(data.in); idx++ {
+			s, _ := NewFromString[uint](data.in[idx])
+			got.Intersect(s)
+		}
+		expected, _ := NewFromString[uint](data.intersect)
+		Assertf(t, Equal(got, expected), " Intersect: %20s: expected %q got %q\n",
+			name, expected, got)
+	}
+}
+
+// TestSubSetMethod tests the SubSet method
+func TestSubSetMethod(t *testing.T) {
+	for name, data := range opData {
+		if len(data.in) == 0 {
+			continue
+		}
+		got, _ := NewFromString[uint](data.in[0])
+		for idx := 1; idx < len(data.in); idx++ {
+			s, _ := NewFromString[uint](data.in[idx])
+			got.SubSet(s)
+		}
+		expected, _ := NewFromString[uint](data.sub)
+		Assertf(t, Equal(got, expected), "    SubSet: %20s: expected %q got %q\n",
+			name, expected, got)
+	}
+}
+
+// TestAddSetMethod tests the AddSet method
+func TestAddSetMethod(t *testing.T) {
+	for name, data := range opData {
+		if len(data.in) == 0 {
+			continue
+		}
+		got, _ := NewFromString[uint](data.in[0])
+		for idx := 1; idx < len(data.in); idx++ {
+			s, _ := NewFromString[uint](data.in[idx])
+			got.AddSet(s)
+		}
+		expected, _ := NewFromString[uint](data.union)
+		Assertf(t, Equal(got, expected), "    AddSet: %20s: expected %q got %q\n",
+			name, expected, got)
+	}
+}
+
