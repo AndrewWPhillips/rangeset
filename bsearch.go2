@@ -8,6 +8,8 @@ package rangeset
 // than the number of ranges in the set. So for example if you search for a value
 // that is less than any element in the set then 0 is returned; if you search for a
 // value that is in or beyond the last range then the number of ranges is returned.
+// Note that if the set includes the smallest element, given by minInt[T](), then zero
+// (below bottom range) cannot be returned, since no element can be below the smallest.
 func (s Set[T]) bsearch(value T) int {
 	bot, top := 0, len(s)
 	for bot < top {

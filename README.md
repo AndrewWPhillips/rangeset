@@ -1,14 +1,14 @@
-Rangeset implements a set container using the proposed new Go parametric polymorphism as implemented in the experimental **go2go** tool. It is somewhat similar to the example "sets" package (found in the Go git repo. at src/cmd/**go2go**/testdata/go2path/src/sets) but uses a slice of ranges rather than a map internally. This has advantages, such as space-efficiency for some large sets, elements are returned in order, etc.
+Rangeset implements a set container using the proposed new Go parametric polymorphism as implemented in the experimental **go2go** tool. It is somewhat similar to the example "sets" package (found in the Go git repo. at src/cmd/**go2go**/testdata/go2path/src/sets) but uses a slice of ranges rather than a map internally. This has advantages, such as space-efficiency for some large sets, elements are returned in order, complement (inverse) operation, Universal sets, etc.
 
 ## Go 2 Parametric Polymorphism
 
-Parametric polymorphism, or what I will call simply generics, has been proposed for "Go 2" for some time. It appears to be close to being added to the language.  It should be backward compatible, so will probably appear in a 1.X version of Go (not "Go 2") - my guess is around Go 1.19.
+Parametric polymorphism, or what I will simply (perhaps inaccurately) call **generics**, has been proposed for "Go 2" for some time. It appears to be close to being added to the language.  It should be backward compatible, so will probably appear in a 1.X version of Go (not "Go 2") - my guess is around Go 1.19.
 
 Luckily, you can try Go generics now using the **go2go** tool which translates source files with the new syntax (stored in files with an extension of **.go2**) into standard Go files.  To get the **go2go** tool just build the latest release of Go (compiler/tools/etc) from the source - see https://golang.org/doc/install/source for details.  (You need a recent version of a git and Go installed first.)  When the instructions say to checkout a specific version branch instead checkout `dev.go2go`.
 
 As in other languages, generics will allow you to add "type parameters" to *functions* and to *types*. Unlike normal (value) parameters, type parameters must be known at compile time. This rangeset package implements a generic *type* - a "set" that has a type parameter specifying the type of elements that can be added to the set.
 
-The repository for the rangeset package includes all it's source as **.go2** files.  (I include one dummy **.go** file as some of the Go tooling is confused by a package that has no **.go** files.) I have also used the latest experimental syntax that uses `interface`s instead of `contract`s to specify type constraints and square brackets **[]** instead of round brackets to enclose type parameters.
+The repository for the rangeset package includes all it's source as **.go2** files.  (I include one dummy **.go** file as some of the Go tooling is confused by a package that has no **.go** files.) I have also used the latest experimental syntax that uses `interface` instead of `contract` to specify type constraints and square brackets **[ ]** instead of round brackets to enclose type parameters.
 
 ## Sets in Go
 
@@ -75,36 +75,63 @@ Normally, you would just use the `Set` type something liekl this:
 Type `Set` implements these methods:
 
 `Add` adds an element to a set (returns true if added, false if already present)
+
 `AddRange` adds a range of elements to the set
+
 `Delete` removes an element from the set
+
 `DeleteRange` removes a range of elements
+
 `Contains` returns true if the element is in the set
+
 `Len` returns the number of elements as an `int` (may wrap around if larger than maxInt)
+
 `Length` returns the number of elements as `uint64` and the number of ranges
+
 `Values` returns a slice containing all the elements (in numeric order)
+
 `Spans` returns a slice of `Span`s containing all the ranges in the set
+
 `String` returns a string encoding of a rangeset
 
+
 `Copy` returns a copy of a set
+
 `AddSet` adds all the elements of another set
+
 `SubSet` deletes all the elements of another set
+
 `Intersect` deletes all elements *not* in another set
 
+`Complement` replaces the set with its inverse
+
+
 `Iterate` calls a function on every element of a set (in numeric order)
+
 `Filter` deletes every element on which a boolean function fails
+
 `Iterator` returns a chan on which every element in the set is placed (in order)
 
 ## Functions
 
 `Make` creates a new set (optionally with initial elements)
+
+`Universal` returns a set including all elements allowed by the type parameter
+
 `NewFromString` returns a new set from a string encoded with the `String` method (above)
+
 `Equal` compares two sets
+
 `Union` finds the union of one or more sets
+
 `Intersect` finds the intersection of one or more sets
 
 ## Acknowledgements
 
 Thanks to Robert Greisemer for providing the generic `minInt` function at my request
+
 Thanks to Dave Cheney for many ideas such as using a map for table-driven tests
+
 Thanks to Bill Kennedy for ideas on more readable messages in tests
+
 Thanks to Steve Mann for the idea of using a colon (:) in the string encoding

@@ -2,12 +2,48 @@ package rangeset
 
 type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
 
+/*
+// TODO: use bsearch for performance
+func (s *Set[T]) Delete(e T) {
+	set := *s
+	for idx, v := range set {
+		switch {
+		case e < v.b:
+			// The element is not in this (or previous) range
+			return
+		case e == v.b && e == v.t - 1:
+			// It matches a single elt range - remove the range
+			*s = set[:idx + copy(set[idx:], set[idx+1:])]
+			return
+		case e == v.b:
+			// The element to remove is at the start of this range
+			set[idx].b = e + 1
+			return
+		case e < v.t - 1:
+			// The element splits the current range into 2 parts
+			*s = append(set, Span[T]{})  // add empty element at end
+			// Note: realloc (in append) may now mean that *s != set
+			copy((*s)[idx+1:], (*s)[idx:])  // move ranges to make space to ...
+			(*s)[idx].t, (*s)[idx+1].b = e, e + 1
+			return
+		case e == v.t - 1:
+			// The element to remove is at end of this range
+			set[idx].t = e
+			return
+		}
+	}
+	// The element to remove is past the end of the last range
+	return
+}
+*/
+
 // Delete removes an element from the set
 // The set is unchanged if the element is not in the set
 // It has time complexity O(log r) where r is the number of ranges or O(log n) worst case.
 func (s *Set[T]) Delete(e T) {
+	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
 	idx := s.bsearch(e)
-	if idx == 0 || e >= (*s)[idx-1].t {
+	if idx == 0 || (e >= (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
 		return // outside any existing range
 	}
 	if e == (*s)[idx-1].b && e == (*s)[idx-1].t - 1 {
@@ -32,7 +68,8 @@ func (s *Set[T]) Delete(e T) {
 
 // DeleteRange removes a range of elements from the set
 func (s *Set[T]) DeleteRange(b, t T) {
-	if t <= b {
+	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	if t <= b && t != endMark {
 		return  // nothing to delete
 	}
 
@@ -43,7 +80,12 @@ func (s *Set[T]) DeleteRange(b, t T) {
 	if bIdx > 0 && b == (*s)[bIdx-1].b {
 		bIdx-- // we don't need to keep any of the bottom Span
 	}
-	if tIdx > 0 && t < (*s)[tIdx-1].t {
+	//if tIdx > 0 && t < (*s)[tIdx-1].t {
+	//	tIdx-- // we need to keep some of the top Span
+	//}
+	if t == endMark {
+		tIdx = len(*s)
+	} else if tIdx > 0 && (t < (*s)[tIdx-1].t || (*s)[tIdx-1].t == endMark) {
 		tIdx-- // we need to keep some of the top Span
 	}
 
@@ -67,10 +109,10 @@ func (s *Set[T]) DeleteRange(b, t T) {
 	*s = (*s)[:len(*s) - (tIdx-bIdx)]
 
 	// Adjust the ends of kept adjacent Spans if necessary
-	if bIdx < len(*s) && t > (*s)[bIdx].b {
+	if bIdx < len(*s) && (t > (*s)[bIdx].b || t == endMark) {
 		(*s)[bIdx].b = t
 	}
-	if bIdx > 0 && b < (*s)[bIdx-1].t {
+	if bIdx > 0 && (b < (*s)[bIdx-1].t || (*s)[bIdx-1].t == endMark) {
 		(*s)[bIdx-1].t = b
 	}
 }

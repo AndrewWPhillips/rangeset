@@ -4,14 +4,57 @@ package rangeset
 
 type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
 
+/*
+// Add inserts a single element into the set
+// TODO: use bsearch() instead of doing linear search of the slice
+func (s *Set[T]) Add(e T) bool {
+	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	set := *s // get slice pointed to to simplify code
+	for idx, v := range set {
+		switch {
+		case e < v.b-1 && v.b != endMark:
+			// Insert new range before the current one
+			*s = append(set, Span[T]{})
+			set = *s // it may have moved due to realloc
+			copy(set[idx+1:], set[idx:])
+			set[idx] = Span[T]{e, e + 1}
+			return true
+		case e == v.b-1 && v.b != endMark:
+			// Just extend current range downwards
+			set[idx].b = e
+			return true
+		case e < v.t || v.t == endMark:
+			return false // already in the set
+		case e == v.t:
+			// Extend range up by 1, possibly joining to range above
+			if idx < len(set)-1 && e == set[idx+1].b-1 {
+				// New element joins the current and next range together
+				e = v.b                      // save beginning of current range
+				copy(set[idx:], set[idx+1:]) // move rest of the ranges down
+				set[idx].b = e               // restore beginning of current
+				*s = set[:len(set)-1]        // remove no longer needed end range
+			} else {
+				// Extend current range upwards
+				set[idx].t = e + 1
+			}
+			return true
+		}
+	}
+	// Append new range
+	*s = append(set, Span[T]{e, e + 1})
+	return true
+}
+*/
+
 // Add inserts a single element into the set
 // It returns true if added or false if it already existed in the set
 // It has time complexity O(log r) where r is the number of ranges or O(log n) worst case.
 func (s *Set[T]) Add(e T) bool {
 	idx := s.bsearch(e)
 	//assert(idx >= 0 && idx <= len(*s))
-	if idx == 0 || e > (*s)[idx-1].t {
-		// Make element is before range [idx] and after range [idx-1] (+ not just past end)
+	var endMark = minInt[T]()  // in a range it flags: bottom/top of all valid elements
+	if idx == 0 || (e > (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
+		// New element is before range [idx] and after range [idx-1] (+ not just past end)
 		if idx < len(*s) && e == (*s)[idx].b-1 {
 			// Extend range [idx] down by one
 			(*s)[idx].b = e
@@ -24,10 +67,10 @@ func (s *Set[T]) Add(e T) bool {
 		return true
 	}
 	// assert(idx > 0)
-	if e == (*s)[idx-1].t {
-		// Make element is just past the end of range [idx-1]
+	if e == (*s)[idx-1].t && (*s)[idx-1].t != endMark {
+		// New element is just past the end of range [idx-1]
 		if idx < len(*s) && e == (*s)[idx].b-1 {
-			// Make element joins range [idx-1] and [idx] together
+			// New element joins range [idx-1] and [idx] together
 			e = (*s)[idx-1].b              // save beginning of previous range
 			copy((*s)[idx-1:], (*s)[idx:]) // move rest of the ranges down
 			(*s)[idx-1].b = e              // restore beginning of current
@@ -41,22 +84,77 @@ func (s *Set[T]) Add(e T) bool {
 	return false // e is already in range [idx-1]
 }
 
+/*
+// AddRange inserts a range of values into the set
+// TODO: use bsearch() instead of doing linear search of the slice
+func (s *Set[T]) AddRange(b, t T) {
+	var a = minInt[T]()  // indicates top/bottom of range of valid elements
+	if t <= b && t != endMark {
+		return // nothing needs to be added
+	}
+	set := *s // get slice pointed to, to simplify code
+	for idx, v := range set {
+		if b > v.t && v.t != endMark {
+			continue
+		}
+		if t < v.b && t != endMark {
+			// Need to insert a range here
+			*s = append(set, Span[T]{})
+			set = *s // it may have moved due to realloc
+			copy(set[idx+1:], set[idx:])
+			set[idx] = Span[T]{b, t}
+			return
+		}
+
+		// Now adjust and merge ranges from this point on
+		if b < v.b {
+			set[idx].b = b // move down bottom of first range
+		}
+		var mIdx int
+		for mIdx = idx; mIdx < len(set)-1; mIdx++ {
+			if t < set[mIdx+1].b && t != endMark {
+				break
+			}
+		}
+		if (t > set[mIdx].t && set[mIdx].t != endMark) || t == endMark {
+			set[mIdx].t = t // move up top of last range
+		}
+
+		// if the new range joined existing ranges we need to compress the slice
+		b = set[idx].b
+		copy(set[idx:], set[mIdx:])
+		set[idx].b = b
+		*s = set[:len(set)-(mIdx-idx)]
+		return
+	}
+	// Append new range after end of all existing ranges
+	*s = append(set, Span[T]{b, t})
+}
+*/
+
 // AddRange inserts a range of values into the set
 // The range is specified using asymmetric bounds: b (1st param) is the lowest element
 // of the range to be added and t (2nd param) is one more than the highest element
 // Like Add() above it has time complexity O(log r) - or O(log n) in the worst case.
 func (s *Set[T]) AddRange(b, t T) {
-	if t <= b {
+	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	if t <= b && t != endMark {
 		return // nothing needs to be added
 	}
 
 	// Work out where Spans will be added or deleted. Note that since the added
 	// range can cover multiple Spans we may have to delete 0 or more, but if the
 	// range doesn't overlap any existing Spans we have to insert one.
-	bIdx, tIdx := s.bsearch(b), s.bsearch(t)
+	var bIdx, tIdx int
+	bIdx = s.bsearch(b)
 	//assert(bIdx <= len(*s) && tIdx <= len(*s) // must be valid Span index or 1 past end
-	if bIdx == 0 || b > (*s)[bIdx-1].t {
+	if bIdx == 0 || (b > (*s)[bIdx-1].t && (*s)[bIdx-1].t != endMark) {
 		bIdx++ // past the end of the idx-1 span
+	}
+	if t == endMark {
+		tIdx = len(*s)
+	} else {
+		tIdx = s.bsearch(t)
 	}
 
 	// At this point the number of Spans to be deleted is given by tIdx-bIdx which can be
@@ -73,7 +171,7 @@ func (s *Set[T]) AddRange(b, t T) {
 	}
 
 	//assert(tIdx > 0 && tIdx >= bIdx)
-	if t < (*s)[tIdx-1].t {
+	if (t < (*s)[tIdx-1].t && t != endMark) || (*s)[tIdx-1].t == endMark {
 		t = (*s)[tIdx-1].t
 	}
 	// Delete the spans we don't need
@@ -84,7 +182,7 @@ func (s *Set[T]) AddRange(b, t T) {
 	if bIdx > 0 && b < (*s)[bIdx-1].b {
 		(*s)[bIdx-1].b = b
 	}
-	if bIdx > 0 && t > (*s)[bIdx-1].t {
+	if bIdx > 0 && (t > (*s)[bIdx-1].t || t == endMark) && (*s)[bIdx-1].t != endMark {
 		(*s)[bIdx-1].t = t
 	}
 }

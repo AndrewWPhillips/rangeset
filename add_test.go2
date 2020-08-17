@@ -6,6 +6,15 @@ type (
 	AddType int                  // set element type used for "add" tests
 )
 
+const (
+	// maxAddtype is the maximum possible value of AddType.
+	// Note that we use uint because AddType (above) is int (uint and int have same number of bits)
+	maxAddType = AddType(^uint(0)>>1)
+	// minAddtype is the minimum possible value of AddType.
+	// Note that this calculation assumes 2's-complement arithmetic but Go integers always use that
+	minAddType = -maxAddType - 1
+)
+
 var addData = map[string]struct {
 	elts     []AddType          // initial elements in the set
 	addElt    AddType           // element to be added
@@ -17,7 +26,12 @@ var addData = map[string]struct {
 	"Add1Before":      {[]AddType{42}, 40, true, [](Span[AddType]){{40, 41}, {42, 43}}},
 	"AddAtStartRange": {[]AddType{42}, 41, true, [](Span[AddType]){{41, 43}}},
 	"AddExisting":     {[]AddType{42}, 42, false, [](Span[AddType]){{42, 43}}},
-
+	"AddMin":          {[]AddType{}, minAddType, true, [](Span[AddType]){{minAddType, minAddType+1}}},
+	"AddMax":          {[]AddType{}, maxAddType, true, [](Span[AddType]){{maxAddType, minAddType}}}, // wraps around
+	"AddExistingMin":  {[]AddType{minAddType}, minAddType, false, [](Span[AddType]){{minAddType, minAddType+1}}},
+	"AddExistingMax":  {[]AddType{maxAddType}, maxAddType, false, [](Span[AddType]){{maxAddType, minAddType}}}, // wraps around
+	"AddMinToMax":     {[]AddType{maxAddType}, minAddType, true, [](Span[AddType]){{minAddType, minAddType+1}, {maxAddType, minAddType}}}, // wraps around
+	"AddMaxToMin":     {[]AddType{minAddType}, maxAddType, true, [](Span[AddType]){{minAddType, minAddType+1}, {maxAddType, minAddType}}}, // wraps around
 	"AddAtEndRange":   {[]AddType{42}, 43, true, [](Span[AddType]){{42, 44}}},
 	"AddAfter":        {[]AddType{42}, 44, true, [](Span[AddType]){{42, 43}, {44, 45}}},
 
@@ -119,6 +133,18 @@ func TestAddReallocEnd(t *testing.T) {
 	const expected = "{10,22,24,26,28,30,32}"
 	got := s.String()
 	Assertf(t, got == expected, "%24s: expected %q got %q\n", "AddReallocEnd", expected, got)
+}
+
+// TestAddUniversal tests adding to the start and end of the universal set
+func TestAddUniversal(t *testing.T) {
+	U := Complement(Make[AddType]()) // complement of empty set is universal set
+	s := U.Copy()
+	got := s.Add(maxAddType)
+	Assertf(t, got == false,  "%24s: expected false got %v\n", "AddUniversal max", got)
+	got = s.Add(minAddType)
+	Assertf(t, got == false,  "%24s: expected false got %v\n", "AddUniversal min", got)
+
+	Assertf(t, Equal(s, U),  "%24s: after adding to U expected %v got %v\n", "AddUniversal", U, s)
 }
 
 var rangeData = map[string]struct {

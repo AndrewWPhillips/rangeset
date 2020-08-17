@@ -4,22 +4,30 @@
 // incrementation (++ operation).  Hence the only element types that can currently be used
 // are the integers (int, uint, byte, int64, etc).
 //
+// Note that (until parametric polymorphism is added to GO) use of the package requires running the
+// go2go tool to convert .go2 files into .go files for specific element types in use.  Hence the
+// **repository "source" files all have extension .go2**. However, one generated file (doc.go)
+// is checked in to avoid go get/build failing due to an "empty" download package.
+//
 // It is similar to the example go2go "sets" package (src\cmd\go2go\testdata\go2path\src\sets in
 // Go source repo) but has some pros and cons.  For many common uses of sets (ie those with large
 // contiguous ranges) it can be much more space efficient.  On the other hand, adding, deleting,
 // and finding elements has time complexity of O(log r), where r is the number of ranges, and
-// O(log n) in the worst case, but can still be faster even though the example "sets" package
-// has time complexity of O(1).
+// O(log n) in the worst case, but can still be faster in practice (despite the example "sets"
+// package mainly having constant time complexity).
 //
 // Apart from performance benefits, it also has the advantage that the elements are ordered (eg
-// the Values() method returns the elements in order. It also has methods for serialising and
-// deserialising sets as strings. A useful method is to get all the ranges of the set.
+// the Values() method returns the elements in order.  It also has additional facilities such as
+// the ability to take the complement of a set, and create a Universal set (a set of all elements
+// of the element type). It also has methods for serialising and deserialising sets as strings.
+// A useful method is "Spans" that returns a slice of all the ranges of the set.
 //
 // Creating sets
 //
 //  s := rangeset.Make[int]()           // create an empty set of ints
 //  s := rangeset.Make[byte](1, 2, 7)   // create a set of bytes with 3 elements
-//  s2 := s.Copy()                     // make a (deep) copy of a set
+//  s := rangeset.Universal[uint64]()   // create a set of all uint64 elements
+//  s2 := s.Copy()                      // make a (deep) copy of a set
 //
 // Adding Elements
 //
@@ -45,6 +53,7 @@
 //  b := rangeset.Equal(s, s2)         // returns true if 2 sets are identical
 //  s := rangeset.Union(s1, s2, ...)   // returns a new set that is the union of 1 or more sets
 //  s := rangeset.Intersect(s1,s2,...) // returns a set that's the intersection of 1 or more sets
+//  s2 := rangeset.Complement(s1)      // returns the inverse of a set
 //
 // Iterating (see also Values above, which returns a slice of all elements)
 //

@@ -2,6 +2,75 @@ package rangeset
 
 import "testing"
 
+// signedData contains table data specifically for testing Complement() on sets of int8
+var signedData = map[string]struct {
+	in, expected string
+}{
+	// Note: these test values assume an element type of int8
+	"Empty":     { "{}", "{-128:127}"},
+	"Universal": { "{-128:127}", "{}"},
+	"Zero":      { "{0}", "{-128:-1,1:127}"},
+	"Bottom":    { "{-128}", "{-127:127}"},
+	"Top":       { "{127}", "{-128:126}"},
+	"Both":      { "{-128:-127,126:127}", "{-126:125}"},
+	"TwoBot":    { "{-128:0,2}", "{1,3:127}"},
+	"TwoTop":    { "{-5:-3,100:127}", "{-128:-6,-2:99}"},
+	"TwoInside": { "{-1,1}", "{-128:-2,0,2:127}"},
+	"EndsMid":   { "{-128,0,127}", "{-127:-1,1:126}"},
+}
+
+// TestComplementSigned tests inverting a set that has a signed integer element type
+func TestComplementSigned(t *testing.T) {
+	for name, data := range signedData {
+		s, _ := NewFromString[int8](data.in)
+
+		// Take the complement of the set and check it is as expected
+		s2 := Complement(s)
+		expected, _ := NewFromString[int8](data.expected)
+		Assertf(t, Equal(s2, expected), "ComplementSigned: %16s: expected %q got %q\n",
+			name, expected, s2)
+
+		// Take the complement of the complement and check it matches the original
+		s3 := Complement(s2)
+		Assertf(t, Equal(s3, s), "ComplementSigned: %16s: expected %q got %q\n",
+			"reverse " + name, s, s3)
+	}
+}
+
+// unsignedData contains data specifically for testing Complement() on sets of uint16
+var unsignedData = map[string]struct {
+	in, expected string
+}{
+	"Empty":     { "{}", "{0:65535}"},
+	"Bottom":    { "{0}", "{1:65535}"},
+	"Top":       { "{65535}", "{0:65534}"},
+	"Both":      { "{0:5,65530:65535}", "{6:65529}"},
+	"TwoBot":    { "{0:100,200}", "{101:199,201:65535}"},
+	"TwoTop":    { "{10,100:65535}", "{0:9,11:99}"},
+	"TwoInside": { "{100,1000}", "{0:99,101:999,1001:65535}"},
+	"ThreeEnds": { "{0:100,200,300:65535}", "{101:199,201:299}"},
+}
+
+// TestComplementUnsigned tests inverting a set that has a unsigned integer (uint16) elements
+func TestComplementUnsigned(t *testing.T) {
+	for name, data := range unsignedData {
+		s, _ := NewFromString[uint16](data.in)
+
+		// Take the complement of the set and check it is as expected
+		s2 := Complement(s)
+		expected, _ := NewFromString[uint16](data.expected)
+		Assertf(t, Equal(s2, expected), "Complement Unsigned: %16s: expected %q got %q\n",
+			name, expected, s2)
+
+		// Take the complement of the complement and check it matches the original
+		s3 := Complement(s2)
+		Assertf(t, Equal(s3, s), "Complement Unsigned: %16s: expected %q got %q\n",
+			"reverse " + name, s, s3)
+	}
+}
+
+// TODO: int64 and uint64 complement tests (endMark)
+
 // opData provides table data for testing various operations: Union(), Intersect(), etc
 var opData = map[string]struct {
 	in               []string  // zero or more sets to be combined (intersected, etc)
@@ -33,6 +102,14 @@ var opData = map[string]struct {
 	"3LapSep":    {[]string{"{1:5}", "{5:6}", "{8:9}"}, "{1:6,8:9}", "{}", "{1:4}"},
 	"3LapSep2":   {[]string{"{1:5}", "{8:9}", "{5:6}"}, "{1:6,8:9}", "{}", "{1:4}"},
 	"3Way":       {[]string{"{4,7}", "{1,7}", "{1,4}"}, "{1,4,7}", "{}", "{}"},
+
+	"UAndU":      {[]string{"{U}", "{U}"}, "{U}", "{U}", "{}"},
+	"UAndEmpty":  {[]string{"{U}", "{}"}, "{U}", "{}", "{U}"},
+	"UAndOne":    {[]string{"{U}", "{1}"}, "{U}", "{1}", "{E:0,2:E}"},
+	"OneAndU":    {[]string{"{1}", "{U}"}, "{U}", "{1}", "{}"},
+	"UAndTwo":    {[]string{"{U}", "{4}", "{2}"}, "{U}", "{}", "{E:1,3,5:E}"},
+	"EmptyAndU":  {[]string{"{}", "{U}"}, "{U}", "{}", "{}"},
+	"StartPlus2": {[]string{"{E:10}", "{5}", "{20}"}, "{E:10,20}", "{}", "{E:4,6:10}"},
 }
 
 // TestUnionFunction performs a union of opData table's "in" sets and compares to "union" set

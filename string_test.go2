@@ -17,6 +17,14 @@ var stringData = map[string]struct {
 	"StringDuplicate": {"{2,1,2}", "{1:2}"},
 	"StringMixed":     {"{3,1,8,2}", "{1:3,8}"},
 	"StringMixRanges": {"{1:2,5,2:3,8}", "{1:3,5,8}"},
+
+	// Note: the following assume that we are testing with int16 element type
+	"Universal":  {"{U}", "{-32768:32767}"},
+	"Universal2": {"{E:E}", "{-32768:32767}"},
+	"BeginMark":  {"{E:10}", "{-32768:10}"},
+	"EndMark":    {"{10:E}", "{10:32767}"},
+	"TwoEnd":     {"{-1,100:E}", "{-1,100:32767}"},
+	"TwoBegin":   {"{E:1,100}", "{-32768:1,100}"},
 }
 
 // TestString uses stringData map to perform (table-driven) tests of String() and NewFromString()

@@ -70,3 +70,24 @@ func TestLen(t *testing.T) {
 	Assertf(t, length == expected, "TestLen: expecting length of %d elements, got length %d", expected, length)
 	Assertf(t, spans == 2, "TestLen: expecting span count of 2, got %v", spans)
 }
+
+// TestUniversal checks that universal on uint64 has zero length and one range
+func TestUniversal(t *testing.T) {
+	u := Universal(uint64)()
+	size, spans := u.Length()
+	Assertf(t, size == 0, "For a universal set was expecting zero length, got %d", size)
+	Assertf(t, spans == 1, "For a universal set was expecting one span, got %v", spans)
+}
+
+// TestEmptyAndUniversalComplement tests universal and empty set complements
+func TestEmptyAndUniversalComplement(t *testing.T) {
+	empty := Make[elementType]()
+	complement := Complement(empty)
+	u := Universal[elementType]()
+	Assertf(t, Equal(u, complement),  "%24s: expected complement of empty set to be %v got %v\n",
+		"TestEmptyUniversal", u, complement)
+
+	complement = Complement(u)
+	Assertf(t, Equal(empty, complement),  "%24s: expected complement of U to be %v got %v\n",
+		"TestEmptyUniversal", empty, complement)
+}
