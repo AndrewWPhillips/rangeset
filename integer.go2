@@ -10,7 +10,7 @@ import (
 
 // isUnsigned checks whether its type param (must be integer type) is unsigned
 // TODO: make sure this function is inlined (otherwise replace it where used)
-func isUnsigned[type T Element]() bool {
+func isUnsigned[T Element]() bool {
 	var zero T
 	if zero - 1 < 0 {
 		// signed int
@@ -22,7 +22,7 @@ func isUnsigned[type T Element]() bool {
 // parseInt converts a decimal string to the type of it's type parameter
 // The return value is undefined if the value overflows the size of the type parameter
 // TODO: pass bitSize to ParseInt/Uint depending on type instead of just using 64 (to get error on overflow)
-func parseInt[type T Element](s string) (T, error) {
+func parseInt[T Element](s string) (T, error) {
 	if isUnsigned[T]() {
 		// parse unsigned int
 		v, err := strconv.ParseUint(s, 10, 64)
@@ -33,7 +33,7 @@ func parseInt[type T Element](s string) (T, error) {
 }
 
 // intToString converts an integer to a decimal string
-func intToString[type T Element](i T) string {
+func intToString[T Element](i T) string {
 	if isUnsigned[T]() {
 		return strconv.FormatUint(uint64(i), 10)
 	}
@@ -42,7 +42,7 @@ func intToString[type T Element](i T) string {
 
 // minInt returns the smallest allowed integer for its type param. (signed/unsigned integer)
 // Thanks to Robert Greisemer for this (see https://github.com/golang/go/issues/40301)
-func minInt[type T Element]() T {
+func minInt[T Element]() T {
 	if isUnsigned[T]() {
 		return 0 // unsigned int types all start with zero
 	}
@@ -69,6 +69,6 @@ func minInt[type T Element]() T {
 }
 
 // maxInt returns the largest allowed integer for Element type - a signed/unsigned integer
-func maxInt[type T Element]() T {
+func maxInt[T Element]() T {
 	return minInt[T]() - 1 // This works for unsigned and signed (2's complement) ints
 }

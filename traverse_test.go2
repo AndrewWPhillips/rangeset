@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-type _[type T] T  // dummy use of [] for type params (else we get "inconsistent use of () or [] for type parameters" error)
-
 type traverseType int  // ATM we seem to need a diff. element type in each test file
 
 // traverseData is for table-driven tests of Iterate and Filter methods

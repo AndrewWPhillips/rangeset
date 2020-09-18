@@ -19,7 +19,7 @@ import (
 // element values - ie the smallest element at the bottom of a range or the largest element at the
 // top. Eg: "{E:10}" represents all possible elements up to (and including) 10; "{1:E}" means all
 // elements from 1 upwards.  The universal set is represented by the string "{U}" or "{E:E}".
-func NewFromString[type T Element](s string) (_ Set[T], _ error) {
+func NewFromString[T Element](s string) (_ Set[T], _ error) {
 	s = strings.TrimSpace(s)
 	if len(s) < 2 || s[0] != '{' || s[len(s)-1] != '}' {
 		return nil, fmt.Errorf("rangeset: string %q for new set is not enclosed in braces", s)

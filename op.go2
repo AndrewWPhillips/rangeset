@@ -1,12 +1,10 @@
 package rangeset
 
-// op.go2 has functions to implement set operations like union, etc
-
-// TODO: check what makes sense for no sets (eg should union of no sets panic?)
+// op.go2 implement set operations like union, etc
 
 // Equal compares two sets
-// TODO: extend to compare more than 2 sets?
-func Equal[type T Element](s1, s2 Set[T]) bool {
+// TODO: extend to compare any number of sets
+func Equal[T Element](s1, s2 Set[T]) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
@@ -23,7 +21,7 @@ func Equal[type T Element](s1, s2 Set[T]) bool {
 // type of int8 the universal set is the integers -128 to +127 and the inverse
 // (using our string serialisation notation) of {1:10} is {-128:0,11:127}
 // TODO: make this a method
-func Complement[type T Element](s Set[T]) Set[T] {
+func Complement[T Element](s Set[T]) Set[T] {
 	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
 	retval := make(Set[T], 0, len(s)+1)
 	if len(s) == 0 {
@@ -46,7 +44,7 @@ func Complement[type T Element](s Set[T]) Set[T] {
 }
 
 // Union finds the union of zero or more sets and returns a new set
-func Union[type T Element](sets ...Set[T]) Set[T] {
+func Union[T Element](sets ...Set[T]) Set[T] {
 	if len(sets) == 0 {
 		return Set[T]{} // return empty set
 	}
@@ -60,7 +58,7 @@ func Union[type T Element](sets ...Set[T]) Set[T] {
 }
 
 // Intersect finds the intersection of zero or more sets, returning a new set
-func Intersect[type T Element](sets ...Set[T]) Set[T] {
+func Intersect[T Element](sets ...Set[T]) Set[T] {
 	if len(sets) == 0 {
 		return Set[T]{} // return empty set
 	}
