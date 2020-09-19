@@ -19,7 +19,7 @@
 // Apart from performance benefits, it also has the advantage that the elements are ordered (eg
 // the Values() method returns the elements in order.  It also has additional facilities such as
 // the ability to take the complement of a set, and create a Universal set (a set of all elements
-// of the element type). It also has methods for serialising and deserialising sets as strings.
+// of the element type). It also has methods for serializing and de-serializing sets as strings.
 // A useful method is "Spans" that returns a slice of all the ranges of the set.
 //
 // Creating sets
@@ -27,19 +27,21 @@
 //  s := rangeset.Make[int]()           // create an empty set of ints
 //  s := rangeset.Make[byte](1, 2, 7)   // create a set of bytes with 3 elements
 //  s := rangeset.Universal[uint64]()   // create a set of all uint64 elements
-//  s2 := s.Copy()                      // make a (deep) copy of a set
+//  s2 := s.Copy()                      // make a copy of a set
 //
 // Adding Elements
 //
-//  s.Add(42)                          // returns false if elt already present
+//  s.Add(42)                          // returns true if added or false if already present
 //  s.AddRange('a', 'z'+1)             // add a range (using asymmetric bounds)
-//  s2.AddSet(s)                       // s2 becomes the union of s2 and s
+//  s.AddSet(s2)                       // s becomes the union of s and s2
+//  s.ReadAll(ctx, ch)                 // adds from a chan until it's closed (or ctx is cancelled)
 //
 // Deleting Elements
 //
-//  s.Delete(42)
+//  s.Delete(42)                       // remove an element - does nothing if not present
 //  s.DeleteRange(1, 11)               // delete elements 1 to 10 (inclusive)
-//  s2.SubSet(s)                       // remove from s2 all the elements of s (if present)
+//  s.SubSet(s2)                       // remove from s all the elements of s2 (if present)
+//  s.Intersect(s2)                    // remove from s all the elements *not* in s2
 //
 // Getting Elements
 //
@@ -49,7 +51,6 @@
 //
 // Operations (see also AddSet above, which performs a set union)
 //
-//  s2.Intersect(s)                    // s2 becomes the intersection of s2 and s
 //  b := rangeset.Equal(s, s2)         // returns true if 2 sets are identical
 //  s := rangeset.Union(s1, s2, ...)   // returns a new set that is the union of 1 or more sets
 //  s := rangeset.Intersect(s1,s2,...) // returns a set that's the intersection of 1 or more sets
@@ -58,7 +59,7 @@
 // Iterating (see also Values above, which returns a slice of all elements)
 //
 //  s.Iterate(f)                       // calls the function f on each element of the set
-//  s.Filter(f)                        // call f on each lement and delets the element if f() return false
-//  s.Iterator(ctx)                    // returns a chan that is sent the element (in order)
+//  s.Filter(f)                        // call f on each element and deletes the element if f() returns false
+//  s.Iterator(ctx)                    // returns a chan that is sent all the set's elements (in order)
 //
 package rangeset

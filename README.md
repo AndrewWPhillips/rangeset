@@ -1,8 +1,8 @@
-Rangeset implements a set container using the proposed new Go parametric polymorphism as implemented in the experimental **go2go** tool. It is somewhat similar to the example "sets" package (found in the Go git repo. at src/cmd/**go2go**/testdata/go2path/src/sets) but uses a slice of ranges rather than a map internally. This has advantages, such as space-efficiency for some large sets, elements are returned in order, complement (inverse) operation, Universal sets, etc.
+Rangeset implements a set container using the proposed new Go parametric polymorphism as implemented in the experimental **go2go** tool. It is somewhat similar to the example "sets" package (found in the Go git repo. at src/cmd/**go2go**/testdata/go2path/src/sets) but uses a slice of ranges rather than a map internally. This has advantages, such as space-efficiency for some large sets, elements are returned in order, complement (inverse) operation is supported as is Universal sets, etc.
 
 ## Go 2 Parametric Polymorphism
 
-Parametric polymorphism, or what I will simply (perhaps inaccurately) call **generics**, has been proposed for "Go 2" for some time. It appears to be close to being added to the language.  It should be backward compatible, so will probably appear in a 1.X version of Go (not "Go 2") - my guess is around Go 1.19.
+Parametric polymorphism, or what the Go community now commonly call **generics**, has been proposed for "Go 2" for some time. It appears to be close to being added to the language.  It should be backward compatible, so will probably appear in a 1.X version of Go (not "Go 2") - my guess is around Go 1.19.
 
 Luckily, you can try Go generics now using the **go2go** tool which translates source files with the new syntax (stored in files with an extension of **.go2**) into standard Go files.  To get the **go2go** tool just build the latest release of Go (compiler/tools/etc) from the source - see https://golang.org/doc/install/source for details.  (You need a recent version of a git and Go installed first.)  When the instructions say to checkout a specific version branch instead checkout `dev.go2go`.
 
@@ -22,11 +22,11 @@ This sort of problem is where generics shine.  It is easy to create a generic se
 
 The rangeset package similarly implements a generic set but with a twist.  It uses a slice of ranges to store the set, instead of a map, which can be advantageous for sets with large contiguous ranges of elements.  However, due to the use of ranges the element type must be orderable (sets usually only require their elements to be comparable).  That is, the type of the element must support operations like less than (<, <=, >, >=) as well as incrementation (++).  Hence the only types in Go that can be used are integer types (byte, int, uint64, rune, etc).
 
-I first had the idea for a "range set" t least 30 years ago and implemented a simple one in C.  However, it wasn't until templates were added to C++ that I created an efficient and useful implementation after I first started using the ground-breaking STL in C++.  (STL stands for standard template library, where "template" is the C++ name of facilities similar to what are called "generics" in other languages.)  My C++ range_set class was compatible with std::set of the STL (apart from the fact that the type parameter had to be of an integral type).  See the article I wrote on the class for the C/C++ User Journal in June 1999 (https://www.drdobbs.com/a-container-for-a-set-of-ranges/184403660).
+I first had the idea for a "range set" at least 30 years ago and implemented a simple one in C.  However, it wasn't until templates were added to C++ that I created an efficient and useful implementation after I first started using the ground-breaking STL in C++.  (STL stands for standard template library, where "template" is the C++ name of facilities similar to what are called "generics" in other languages.)  My C++ range_set class was compatible with std::set of the STL (apart from the fact that the type parameter had to be of an integral type).  See the article I wrote on the class for the C/C++ User Journal in June 1999 (https://www.drdobbs.com/a-container-for-a-set-of-ranges/184403660).
 
 Although my C++ implementation used a linked list of ranges, I found that in Go a slice of ranges worked equally well.  Each range in the slice simply stores the bounds of the range using asymmetric bounds (inclusive lower bound, exclusive upper bound). All operations maintain the property that the ranges are kept in numeric order and non-overlapping.
 
-For compatibility with the example generic set that the Go Authors created, I have used the same method names, including `Contains`, `AddSet`, `SubSet`, `Iterate`, etc, so rangeset could act as a drop-in replacement for a set (of integers).  Of course, there are additional methods that take advantage of the unique properties of a rangeset, such as the ability to return all the ranges.
+For compatibility with the example generic set mentioned above, that the Go Authors created, I have used the same method names, including `Contains`, `AddSet`, `SubSet`, `Iterate`, etc, so rangeset could act as a drop-in replacement for a set (of integers).  Of course, there are additional methods that take advantage of the unique properties of a rangeset, such as the ability to return all the ranges.
 
 ## Disadvantages
 
@@ -64,7 +64,7 @@ Using this list control, a user could select large swathes of elements (by click
 
 There are three exported types: `Set` is the range set, `Element` constrains the `Set`s type parameters to only be of integer types, `Span` stores two values representing a range (as in the slice returned by the `Spans` method).
 
-Normally, you would just use the `Set` type something liekl this:
+Normally, you would just use the `Set` type something like this:
 
 ```
     set := rangeset.Make[uint16](1, 42, 3e4)
@@ -97,20 +97,22 @@ Type `Set` implements these methods:
 
 `Copy` returns a copy of a set
 
-`AddSet` adds all the elements of another set
+`AddSet` adds all the elements of another set (Union)
 
 `SubSet` deletes all the elements of another set
 
 `Intersect` deletes all elements *not* in another set
 
-`Complement` replaces the set with its inverse
+`Complement` returns the inverse set
 
 
 `Iterate` calls a function on every element of a set (in numeric order)
 
 `Filter` deletes every element on which a boolean function fails
 
-`Iterator` returns a chan on which every element in the set is placed (in order)
+`Iterator` returns a <-chan on which every element in the set is placed (in order)
+
+`ReadAll` adds all of the elements read from a <-chan
 
 ## Functions
 
@@ -120,6 +122,8 @@ Type `Set` implements these methods:
 
 `NewFromString` returns a new set from a string encoded with the `String` method (above)
 
+`NewFromRange` returns a new set given an asymmetric range of values
+
 `Equal` compares two sets
 
 `Union` finds the union of one or more sets
@@ -128,10 +132,10 @@ Type `Set` implements these methods:
 
 ## Acknowledgements
 
-Thanks to Robert Greisemer for providing the generic `minInt` function at my request
+Thanks to Robert Greisemer for providing the generic `minInt` function
 
 Thanks to Dave Cheney for many ideas such as using a map for table-driven tests
 
 Thanks to Bill Kennedy for ideas on more readable messages in tests
 
-Thanks to Steve Mann for the idea of using a colon (:) in the string encoding
+Thanks to Steve Mann for the idea of using a colon (:) rather than a dash (-) in the string encoding

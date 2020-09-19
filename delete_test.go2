@@ -36,7 +36,7 @@ func TestTableDelete(t *testing.T) {
 		s := Make(data.elts...)
 		s.Delete(data.deleteElt)
 		got := s.String()
-		Assertf(t, got == data.expected, "Delete:%24s: expected %q got %q\n", name, data.expected, got)
+		Assertf(t, got == data.expected, "TableDelete:%24s: expected %q got %q\n", name, data.expected, got)
 	}
 }
 
@@ -120,3 +120,27 @@ func TestTableDeleteRange(t *testing.T) {
 		Assertf(t, got == data.expected, "Delete Range:%24s: expected %q got %q\n", name, data.expected, got)
 	}
 }
+
+var stringDeleteData = map[string]struct {
+	in       string
+	toDelete uint16
+	expected string
+}{
+	"DeleteStartFromU":  { "{U}", 0, "{1:65535}" },
+	"DeleteOneFromU":    { "{U}", 1, "{0,2:65535}" },
+	"DeleteTwoFromU":    { "{U}", 2, "{0:1,3:65535}" },
+	"DeletePenultimate": { "{U}", 65534, "{0:65533,65535}" },
+	"DeleteEndFromU":    { "{U}", 65535, "{0:65534}" },
+}
+
+// TestTableDeleteFromU does table driven tests deleting elements from Universal set
+func TestTableDeleteFromU(t *testing.T) {
+	for name, data := range stringDeleteData {
+		s, err := NewFromString[uint16](data.in)
+		Assertf(t, err == nil, "DeleteFromU:%24s: expected <nil> (no error) got %v\n", name, err)
+		s.Delete(data.toDelete)
+		got := s.String()
+		Assertf(t, got == data.expected, "DeleteFromU:%24s: expected %q got %q\n", name, data.expected, got)
+	}
+}
+

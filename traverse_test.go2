@@ -31,6 +31,7 @@ var traverseData = map[string]struct {
 	"Range3B": {"{0:3,5:6}", 3},
 	"Range3C": {"{0:3,5:7}", 3},
 	"Range3D": {"{0:3,5:8}", 4},
+	// TODO: add ranges that includes U and E
 }
 
 // TestIterateMethod tests that Iterate calls the function on every element using opData.union set
@@ -97,7 +98,7 @@ func TestFilterEven(t *testing.T) {
 func TestIteratorAll(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)
-		got := make([]traverseType, 0, in.Len())
+		var got []traverseType
 		for v := range in.Iterator(context.Background()) {
 			got = append(got, v)
 		}
@@ -124,4 +125,15 @@ func TestIteratorCancel(t *testing.T) {
 	_, _ = <-ch
 	_, ok = <-ch
 	Assertf(t, !ok, "IteratorCancel: After cancel expected read status to be false, got %t\n", ok)
+}
+
+// TestChanRoundTrip tests the ReadAll (and Iterator) methods using a "round trip" - ie put the elements of
+// as set onto a chan then reading back into a new set and checking that the sets are the same.
+func TestChanRoundTrip(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		var out Set[traverseType]
+		out.ReadAll(context.Background(), in.Iterator(context.Background()))
+		Assertf(t, Equal(in, out), "ChanRoundTrip: %12s: expected %v, got %v", name, in, out)
+	}
 }

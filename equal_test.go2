@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-type EqualElementType int
+type EqualElementType int // Element type for tests in this file (it seems we have to declare a different element type in each test file)
 
 // notEqualdata provides a table of data for tests that compare that 2 sets with slight differences
 // do not compare equal.  (Tests that equal sets compare equal are found in many other tests).
