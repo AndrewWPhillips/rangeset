@@ -91,7 +91,7 @@ func TestRoundTrip1(t *testing.T) {
 // TestAddReallocStart checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the beginning of the slice
 func TestAddReallocStart(t *testing.T) {
-	s := NewFromRange(AddType)(20, 40)
+	s := NewFromRange[AddType](20, 40)
 	s.Add(2)
 	s.Add(4)
 	s.Add(6)
@@ -210,7 +210,7 @@ func TestRoundTrip2(t *testing.T) {
 // TestAddRangeReallocStart checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the beginning of the slice
 func TestAddRangeReallocStart(t *testing.T) {
-	s := NewFromRange(AddType)(20, 40)
+	s := NewFromRange[AddType](20, 40)
 	s.AddRange(2, 3)
 	s.AddRange(4, 5)
 	s.AddRange(6, 7)

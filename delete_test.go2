@@ -44,9 +44,9 @@ func TestTableDelete(t *testing.T) {
 // We start with a single range and repeatedly split it by deleting elements in the
 // (original) range - each time splitting a range in two to expand the slice.
 func TestDeleteRealloc(t *testing.T) {
-	//s := NewFromRange(int)(1, 12)
+	//s := NewFromRange[int](1, 12)
 	// The above causes an error: instantiate୦୦NewFromRange୦int redeclared in this block
-	s := NewFromRange(DeleteElementType)(1, 12)
+	s := NewFromRange[DeleteElementType](1, 12)
 	// Cause 5 appends - will trigger 2 or 3 memory reallocations
 	s.Delete(8)
 	s.Delete(2)

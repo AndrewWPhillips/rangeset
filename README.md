@@ -14,15 +14,17 @@ The repository for the rangeset package includes all it's source as **.go2** fil
 
 Set in Go (without generics) are typically implemented using a map, where the key is the set element type and the value is ignored.  This is efficient but not that useful as it does not provide many operations that are commonly used with sets.
 
+Typically the map's value type is `struct{}`. (Note that `struct{}` is a type and `struct{}{}` is a literal of that type.)  So for a set of ints you would use `map[int]struct{}`. It's also not unusual to see a map of `bool` (ie `map[int]bool`) but that is somewhat redundant as storing false would be the same as the element not being present at all. Moreover, for large sets it will save a lot of space as `struct{}` has zero size whereas a `bool` is one byte.
+
 Alternatively, there are open source projects that implement sets, such as the excellent https://github.com/deskarep/golang-set which provides all manner of set operations.  However, a problem with this type of solution is that set elements must be "boxed" (stored in an `interface{}`), which affects performance.  It also impacts type safety - for example, the compiler can't prevent you from accidentally adding a `string` to a set of `int`. Moreover, you could even add a value of a non-comparable type to a set which would cause a run-time panic.
 
-This sort of problem is where generics shine.  It is easy to create a generic set type that is as performant and as type-safe as a map, with the convenience and safety of pre-written set operations (and also avoids the confusing use of `struct{}` as the map value type).  This is exactly what the example set type in the package at src/cmd/*go2go*/testdata/go2path/src/sets package provides.  Undoubtedly, it will be one of the first container types added to the Go standard library when generics finally make it into the language.
+This sort of problem is where generics shine.  It is easy to create a generic set type that is as performant and as type-safe as a map, with the convenience and safety of pre-written set operations (and also hides the confusing use of `struct{}` as the map value type).  This is exactly what the example set type in the package at src/cmd/*go2go*/testdata/go2path/src/sets package provides.  Undoubtedly, it will be one of the first container types added to the Go standard library when generics finally make it into the language.
 
 ## rangeset
 
 The rangeset package similarly implements a generic set but with a twist.  It uses a slice of ranges to store the set, instead of a map, which can be advantageous for sets with large contiguous ranges of elements.  However, due to the use of ranges the element type must be orderable (sets usually only require their elements to be comparable).  That is, the type of the element must support operations like less than (<, <=, >, >=) as well as incrementation (++).  Hence the only types in Go that can be used are integer types (byte, int, uint64, rune, etc).
 
-I first had the idea for a "range set" at least 30 years ago and implemented a simple one in C.  However, it wasn't until templates were added to C++ that I created an efficient and useful implementation after I first started using the ground-breaking STL in C++.  (STL stands for standard template library, where "template" is the C++ name of facilities similar to what are called "generics" in other languages.)  My C++ range_set class was compatible with std::set of the STL (apart from the fact that the type parameter had to be of an integral type).  See the article I wrote on the class for the C/C++ User Journal in June 1999 (https://www.drdobbs.com/a-container-for-a-set-of-ranges/184403660).
+I first had the idea for a "range set" at least 30 years ago and implemented a simple one in C.  However, it wasn't until templates were added to C++ that I created an efficient and useful implementation after I first started using the ground-breaking STL in C++.  My C++ range_set class was compatible with std::set of the STL (apart from the fact that the type parameter had to be of an integral type).  See the article I wrote on the class for the C/C++ User Journal in June 1999 (https://www.drdobbs.com/a-container-for-a-set-of-ranges/184403660).
 
 Although my C++ implementation used a linked list of ranges, I found that in Go a slice of ranges worked equally well.  Each range in the slice simply stores the bounds of the range using asymmetric bounds (inclusive lower bound, exclusive upper bound). All operations maintain the property that the ranges are kept in numeric order and non-overlapping.
 
@@ -38,7 +40,7 @@ Hence time complexity is worse than that for a set implemented using a map (hash
 
 Space complexity is much better, being O(r).  Even in the worst case (n/r == 1) it is O(n) the same as a map. In practice, for the worst case (all non-contiguous elements) a rangeset will be almost twice the size as the map with the same elements, since each range stores two values, but that is not the sort of set to use with a rangeset.
 
-Perhaps not a disadvantage, but another thing to be aware of is that *a rangeset is not safe for concurrent access*.  If you are accessing a rangeset from more than goroutine, you must protect the access - for example with a `mutex`. (As usual if all goroutines are reading, and not modifying the rangeset, then synchronisation is not necessary once any writes have been completed.)
+Perhaps not a disadvantage, but another thing to be aware of is that *a rangeset is not safe for concurrent access*.  If you are accessing a rangeset from more than goroutine, you must protect the access (unless all accesses are reads) - for example with a `mutex`.
 
 ## Advantages
 
@@ -58,13 +60,13 @@ A rangeset may not be appropriate for every use of a set, especially sparse sets
 
 The first use I made of the C++ rangeset was in an implementation of a Windows "virtual" list control. It allowed for a list control with up to 4 billion (virtual) items. (The list box that Windows provided, at the time, had trouble handling 1,000.)
 
-Using this list control, a user could select large swathes of elements (by clicking, scrolling and Shift+clicking) which would simply be stored as a range in the range set.  Selecting the whole list (with Ctrl+A) resulted in a rangeset of just one range.  Using a "normal" set (such as std:set) it would have been impossible to store the selection for list of many millions of elements (given the memory sizes of 20 years ago).
+Using this list control, a user could select large swathes of elements (by clicking, scrolling and Shift+clicking) which would simply be stored as a range in the range set.  Selecting the whole list (with Ctrl+A) resulted in a rangeset of just one range.  Using a "normal" set (such as std:set) it would have been impossible to store the selection for a list of many millions of elements (given the memory sizes of 20 years ago).
 
 ## Types
 
 There are three exported types: `Set` is the range set, `Element` constrains the `Set`s type parameters to only be of integer types, `Span` stores two values representing a range (as in the slice returned by the `Spans` method).
 
-Normally, you would just use the `Set` type something like this:
+Normally, you would just use the `Set` type by creating one something like this:
 
 ```
     set := rangeset.Make[uint16](1, 42, 3e4)
@@ -112,7 +114,7 @@ Type `Set` implements these methods:
 
 `Iterator` returns a <-chan on which every element in the set is placed (in order)
 
-`ReadAll` adds all of the elements read from a <-chan
+`ReadAll` adds all of the elements read from a <-chan (inverse of Iterator)
 
 ## Functions
 

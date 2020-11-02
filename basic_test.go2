@@ -73,7 +73,7 @@ func TestLen(t *testing.T) {
 
 // TestUniversal checks that universal on uint64 has zero length and one range
 func TestUniversal(t *testing.T) {
-	u := Universal(uint64)()
+	u := Universal[uint64]()
 	size, spans := u.Length()
 	Assertf(t, size == 0, "For a universal set was expecting zero length, got %d", size)
 	Assertf(t, spans == 1, "For a universal set was expecting one span, got %v", spans)
