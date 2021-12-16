@@ -1,6 +1,6 @@
 package rangeset
 
-// op.go2 implement set operations like union, etc
+// op.go implement set operations like union, etc
 
 // Equal compares two sets
 // TODO: extend to compare any number of sets
@@ -22,11 +22,11 @@ func Equal[T Element](s1, s2 Set[T]) bool {
 // (using our string serialisation notation) of {1:10} is {-128:0,11:127}
 // TODO: make this a method
 func Complement[T Element](s Set[T]) Set[T] {
-	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	var endMark = minInt[T]() // indicates top/bottom of range of valid elements
 	retval := make(Set[T], 0, len(s)+1)
 	if len(s) == 0 {
 		// Inverse of empty set is U (set of all valid elements)
-		retval = append(retval, Span[T]{endMark, endMark})  // represents U
+		retval = append(retval, Span[T]{endMark, endMark}) // represents U
 		return retval
 	}
 	bot := endMark

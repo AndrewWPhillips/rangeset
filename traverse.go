@@ -1,6 +1,6 @@
 package rangeset
 
-// traverse.go2 has methods to process the elements of a set
+// traverse.go has methods to process the elements of a set
 
 import "context"
 

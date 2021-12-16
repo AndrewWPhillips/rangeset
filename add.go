@@ -1,6 +1,6 @@
 package rangeset
 
-// add.go2 implements methods to add to a rangeset
+// add.go implements methods to add to a rangeset
 
 // Add inserts a single element into the set
 // It returns true if added or false if it already existed in the set
@@ -8,7 +8,7 @@ package rangeset
 func (s *Set[T]) Add(e T) bool {
 	idx := s.bsearch(e)
 	//assert(idx >= 0 && idx <= len(*s))
-	var endMark = minInt[T]()  // in a range it flags: bottom/top of all valid elements
+	var endMark = minInt[T]() // in a range it flags: bottom/top of all valid elements
 	if idx == 0 || (e > (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
 		// New element is before range [idx] and after range [idx-1] (+ not just past end)
 		if idx < len(*s) && e == (*s)[idx].b-1 {
@@ -18,7 +18,7 @@ func (s *Set[T]) Add(e T) bool {
 			// Add new range between [idx-1] and [idx] (incl. before 1st and after last)
 			*s = append(*s, Span[T]{})
 			copy((*s)[idx+1:], (*s)[idx:])
-			(*s)[idx] = Span[T]{e, e+1}
+			(*s)[idx] = Span[T]{e, e + 1}
 		}
 		return true
 	}
@@ -45,7 +45,7 @@ func (s *Set[T]) Add(e T) bool {
 // of the range to be added and t (2nd param) is one more than the highest element
 // Like Add() above it has time complexity O(log r) - or O(log n) in the worst case.
 func (s *Set[T]) AddRange(b, t T) {
-	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	var endMark = minInt[T]() // indicates top/bottom of range of valid elements
 	if t <= b && t != endMark {
 		return // nothing needs to be added
 	}
@@ -84,7 +84,7 @@ func (s *Set[T]) AddRange(b, t T) {
 	}
 	// Delete the spans we don't need
 	copy((*s)[bIdx:], (*s)[tIdx:])
-	*s = (*s)[:len(*s) - (tIdx-bIdx)]
+	*s = (*s)[:len(*s)-(tIdx-bIdx)]
 
 	// Adjust, as necessary, the ends of the retained span
 	if bIdx > 0 && b < (*s)[bIdx-1].b {

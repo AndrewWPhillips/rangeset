@@ -1,6 +1,6 @@
 package rangeset
 
-// integer.go2 provides internal functions to deal with the element type, such as
+// integer.go provides internal functions to deal with the element type, such as
 // string conversions and getting the min/max allowed values for an element type
 
 import (
@@ -12,7 +12,7 @@ import (
 // TODO: make sure this function is inlined (otherwise replace it where used)
 func isUnsigned[T Element]() bool {
 	var zero T
-	if zero - 1 < 0 {
+	if zero-1 < 0 {
 		// signed int
 		return false
 	}

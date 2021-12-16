@@ -8,7 +8,7 @@ type elementType int  // Note that we have to declare a different element type i
 
 // Assertf is a test helper that marks a test as having failed and displays
 // more information about the test then continues the current test.
-// If called more than once it displays a lists of test messages each preceded
+// When called multiple times you will see a list of test messages each preceded
 // by a tick or cross, but the list is only displayed if at least one
 // test fails or the verbose (-test.v) option is used.
 func Assertf(t *testing.T, succeeded bool, format string, args ...interface{}) {

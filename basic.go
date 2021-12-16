@@ -1,17 +1,19 @@
 package rangeset
 
-// basic.go2 implements basic functions such as creating range sets, checking if a set contains
+// basic.go implements basic functions such as creating range sets, checking if a set contains
 // an element, number of elements, adding (union), subtraction, intersection etc.
 
 import (
 	"constraints"
 )
 
-type Element = constraints.Integer
+type Element interface {
+	constraints.Integer
+}
 
 type (
-	Span[T Element] struct	{ b, t T } // one "range" (bottom, top+1)
-	Set[T Element] []Span[T]          // a set is just a slice of ranges
+	Span[T Element] struct{ b, t T } // one "range" (bottom, top+1)
+	Set[T Element]  []Span[T]        // a set is just a slice of ranges
 )
 
 // Make creates a new set optionally taking initial element(s)
@@ -79,7 +81,7 @@ func (s Set[T]) Len() int {
 // does a binary search over the ranges).  In the worst case it is O(log n).
 func (s Set[T]) Contains(e T) bool {
 	idx := s.bsearch(e)
-	var endMark = minInt[T]()  // in a range it flags: bottom/top of all valid elements
+	var endMark = minInt[T]() // in a range it flags: bottom/top of all valid elements
 	return idx > 0 && (e < s[idx-1].t || s[idx-1].t == endMark)
 }
 
