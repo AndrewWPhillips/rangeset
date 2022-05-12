@@ -1,7 +1,7 @@
 Rangeset implements a set container using the Go generics as implemented in the Go 1.18. It is somewhat similar to the
-example "sets" package (new in Go m1.18)) but uses a slice of ranges rather than a map internally. This has advantages,
-such as space-efficiency for some large sets, elements are returned in order, complement (inverse) operation is
-supported as is Universal sets, etc.
+example "sets" package (should be in the Go 1.19 std lib) but uses a slice of ranges rather than a map internally. This 
+has advantages, such as space-efficiency for large sets (including dense and sparse sets), elements are returned in order, 
+complement (inverse) operation is supported as is Universal sets, etc.
 
 ## Go Generics (Parametric Polymorphism)
 
