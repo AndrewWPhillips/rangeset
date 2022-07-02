@@ -4,7 +4,7 @@ package rangeset
 // an element, number of elements, adding (union), subtraction, intersection etc.
 
 import (
-	"constraints"
+	"golang.org/x/exp/constraints"
 )
 
 type Element interface {

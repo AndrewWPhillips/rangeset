@@ -12,11 +12,7 @@ import (
 // TODO: make sure this function is inlined (otherwise replace it where used)
 func isUnsigned[T Element]() bool {
 	var zero T
-	if zero-1 < 0 {
-		// signed int
-		return false
-	}
-	return true
+	return zero-1 > 0
 }
 
 // parseInt converts a decimal string to the type of it's type parameter
