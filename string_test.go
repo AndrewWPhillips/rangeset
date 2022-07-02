@@ -7,8 +7,8 @@ type StringElementType int16
 var stringData = map[string]struct {
 	in, expected string
 }{
-	"StringEmpty":     {"{}", "{}"},
-	"StringNegative":  {"{-1}", "{-1}"},
+	"StringEmpty":    {"{}", "{}"},
+	"StringNegative": {"{-1}", "{-1}"},
 	// The following inputs are not in the normal serialisation format but will work
 	"StringMerge1":    {"{1,2,4}", "{1:2,4}"},
 	"StringMerge2":    {"{1,3,4}", "{1,3:4}"},

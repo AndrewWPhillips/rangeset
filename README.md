@@ -1,16 +1,17 @@
-Rangeset implements a set container using the Go generics as implemented in the Go 1.18. It is somewhat similar to the
-example "sets" package (should be in the Go 1.19 std lib) but uses a slice of ranges rather than a map internally. This 
-has advantages, such as space-efficiency for large sets (including dense and sparse sets), elements are returned in order, 
-complement (inverse) operation is supported as is Universal sets, etc.
+Rangeset implements a set container using the Go generics as implemented in Go 1.18.  It is somewhat similar to the
+example Go2Go "sets" package (which was available with the experimental Go2Go release and will probably appear in the 
+standard library in Go 1.19) but uses a slice of ranges rather than a map internally.  But this variation has advantages 
+over the standard sets package, such as space-efficiency for some large sets (including dense and sparse sets), elements 
+are returned in order, complement (inverse) operation is supported as are Universal sets, etc.
 
 ## Go Generics (Parametric Polymorphism)
 
 Parametric polymorphism, or what the Go community now commonly call **generics**, had been proposed for "Go 2" for some
 time. It was officially added to the language in early 2022 (Go 1.18).
 
-As in other languages, generics allow you to add "type parameters" to *functions* and to *types*. Unlike normal (value)
-parameters, type parameters must be known at compile time. This rangeset package implements a generic *type* - a "set"
-that has a type parameter specifying the type of elements that can be added to the set.
+Somewhat similarly to other languages, generics allow you to add "type parameters" to *functions* and to *types*. Unlike
+value parameters, type parameters are set (or instantiated) at compile time. This rangeset package implements a generic
+*type* - a "set" that has a type parameter specifying the type of elements that can be added to the set.
 
 ## Sets in Go
 
@@ -19,22 +20,22 @@ is ignored. This is efficient but not that useful as it does not provide many op
 sets. Note that the element type of a set must be comparable (ie support the == and != operations). This is enforced
 when using a map as a map key must be comparable.
 
-When map is used as a makeshift set the value type is not important (only the key) so typically `struct{}` is used. (
-Note that `struct{}` is a type and `struct{}{}` is a literal of that type.)  So for a set of ints you would
-use `map[int]struct{}`. It's also not unusual to see a map of `bool` (eg `map[int]bool`) but that is somewhat redundant
-as storing false would be the same as the element not being present at all. Moreover, for large sets it will save a lot
-of space as `struct{}` has zero size whereas a `bool` uses one byte.
+When a map is used as a makeshift set the value type is not important (only the key) so typically `struct{}` is used. 
+(Note that `struct{}` is a type and `struct{}{}` is a literal of that type.)  So for a set of ints you would
+use `map[int]struct{}`. It's also not unusual to see a map of `bool` (eg `map[int]bool`) used as a set but that is
+somewhat redundant as storing false would be the same as the element not being present at all. Moreover, for large 
+sets it will save a lot of space as `struct{}` has zero size whereas a `bool` uses one byte.
 
-Alternatively, there are open source projects that implement sets, such as the
-excellent https://github.com/deskarep/golang-set which provides all manner of set operations. However, a problem with
+Alternatively, there are open source projects that implement sets, such as the excellent 
+https://github.com/deskarep/golang-set which provides all manner of set operations. However, a problem with
 this type of solution is that set elements must be "boxed" (stored in an `interface{}`), which affects performance. It
 also impacts type safety - for example, the compiler can't prevent you from accidentally adding a `string` to a set
 of `int`. Moreover, you could even add a value of a non-comparable type to a set which would cause a run-time panic.
 
 This sort of problem is where generics shine. It is easy to create a generic set type that is as performant and as
-type-safe as a map, with the convenience and safety of pre-written set operations (and also hides the confusing use
-of `struct{}` as the map value type). This is exactly what the example set type in the standard library set package
-provides.
+type-safe as a map, with the convenience and safety of pre-written set operations (and also hides the confusing detail
+of `struct{}` as the map value type). In fact this is exactly what the example Go2Go "sets" package worked - it wrapped 
+a map[T]struct{} and added useful set operations.
 
 ## rangeset
 

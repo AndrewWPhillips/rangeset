@@ -1,24 +1,24 @@
-package rangeset  // ATM we can't do external tests using from rangeset_test
+package rangeset // ATM we can't do external tests using from rangeset_test
 
 import (
 	"context"
 	"testing"
 )
 
-type traverseType int  // ATM we seem to need a diff. element type in each test file
+type traverseType int // ATM we seem to need a diff. element type in each test file
 
 // traverseData is for table-driven tests of Iterate and Filter methods
 var traverseData = map[string]struct {
-	in string
+	in        string
 	evenCount int
 }{
-	"Empty": {"{}", 0},
-	"One": {"{1}", 0},
-	"Two": {"{2}", 1},
-	"Odds": {"{1,3,5,7,9,11,13,15,17,19}", 0},
-	"Evens": {"{2,4,6,8,10,12,14,16,18,20}", 10},
-	"Both": {"{1:20}", 10},
-	"Both2": {"{2:20}", 10},
+	"Empty":   {"{}", 0},
+	"One":     {"{1}", 0},
+	"Two":     {"{2}", 1},
+	"Odds":    {"{1,3,5,7,9,11,13,15,17,19}", 0},
+	"Evens":   {"{2,4,6,8,10,12,14,16,18,20}", 10},
+	"Both":    {"{1:20}", 10},
+	"Both2":   {"{2:20}", 10},
 	"Range1A": {"{1,4:5}", 1},
 	"Range1B": {"{1,4:6}", 2},
 	"Range1C": {"{1,4:7}", 2},
@@ -55,7 +55,7 @@ func TestFilterNone(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)
 		origLen := in.Len()
-		in.Filter(func(v traverseType) bool  { return true }) // keep all elts
+		in.Filter(func(v traverseType) bool { return true }) // keep all elts
 		Assertf(t, in.Len() == origLen, "FilterNone: %20s: expected %d elements remaining, got %d\n",
 			name, origLen, in.Len())
 	}
@@ -65,7 +65,7 @@ func TestFilterNone(t *testing.T) {
 func TestFilterAll(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)
-		in.Filter(func(v traverseType) bool  { return false }) // keep no elts
+		in.Filter(func(v traverseType) bool { return false }) // keep no elts
 		Assertf(t, in.Len() == 0, "FilterAll: %20s: expected no elements remaining, got %d\n",
 			name, in.Len())
 	}
@@ -75,7 +75,7 @@ func TestFilterAll(t *testing.T) {
 func TestFilterOdd(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)
-		in.Filter(func(v traverseType) bool  { return v%2 == 0 }) // keep even elts
+		in.Filter(func(v traverseType) bool { return v%2 == 0 }) // keep even elts
 		Assertf(t, in.Len() == data.evenCount,
 			"FilterOdd: %20s: expected %d even elements remaining, got %d\n",
 			name, data.evenCount, in.Len())
@@ -87,10 +87,10 @@ func TestFilterEven(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)
 		origLen := in.Len()
-		in.Filter(func(v traverseType) bool  { return v%2 != 0 }) // keep odd elts
-		Assertf(t, in.Len() == origLen - data.evenCount,
+		in.Filter(func(v traverseType) bool { return v%2 != 0 }) // keep odd elts
+		Assertf(t, in.Len() == origLen-data.evenCount,
 			"FilterEven: %20s: expected %d odd elements remaining, got %d\n",
-			name, origLen - data.evenCount, in.Len())
+			name, origLen-data.evenCount, in.Len())
 	}
 }
 

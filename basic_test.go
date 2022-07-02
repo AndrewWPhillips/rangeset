@@ -1,10 +1,10 @@
-package rangeset  // Note: we can't do external tests using package rangeset_test (yet) due to deficiencies of go2go
+package rangeset // Note: we can't do external tests using package rangeset_test (yet) due to deficiencies of go2go
 
 import (
 	"testing"
 )
 
-type elementType int  // Note that we have to declare a different element type in each test file due to deficiencies of go2go
+type elementType int // Note that we have to declare a different element type in each test file due to deficiencies of go2go
 
 // Assertf is a test helper that marks a test as having failed and displays
 // more information about the test then continues the current test.
@@ -19,9 +19,9 @@ func Assertf(t *testing.T, succeeded bool, format string, args ...interface{}) {
 
 	t.Helper()
 	if !succeeded {
-		t.Errorf("%s\t" + format, append([]interface{}{failed}, args...)...)
+		t.Errorf("%s\t"+format, append([]interface{}{failed}, args...)...)
 	} else {
-		t.Logf("%s\t" + format, append([]interface{}{succeed}, args...)...)
+		t.Logf("%s\t"+format, append([]interface{}{succeed}, args...)...)
 	}
 }
 
@@ -84,10 +84,10 @@ func TestEmptyAndUniversalComplement(t *testing.T) {
 	empty := Make[elementType]()
 	complement := Complement(empty)
 	u := Universal[elementType]()
-	Assertf(t, Equal(u, complement),  "%24s: expected complement of empty set to be %v got %v\n",
+	Assertf(t, Equal(u, complement), "%24s: expected complement of empty set to be %v got %v\n",
 		"TestEmptyUniversal", u, complement)
 
 	complement = Complement(u)
-	Assertf(t, Equal(empty, complement),  "%24s: expected complement of U to be %v got %v\n",
+	Assertf(t, Equal(empty, complement), "%24s: expected complement of U to be %v got %v\n",
 		"TestEmptyUniversal", empty, complement)
 }

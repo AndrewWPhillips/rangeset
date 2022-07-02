@@ -4,21 +4,21 @@ package rangeset
 // The set is unchanged if the element is not in the set
 // It has time complexity O(log r) where r is the number of ranges, O(log n) in the worst case.
 func (s *Set[T]) Delete(e T) {
-	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	var endMark = minInt[T]() // indicates top/bottom of range of valid elements
 	idx := s.bsearch(e)
 	if idx == 0 || (e >= (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
 		return // outside any existing range
 	}
-	if e == (*s)[idx-1].b && e == (*s)[idx-1].t - 1 {
+	if e == (*s)[idx-1].b && e == (*s)[idx-1].t-1 {
 		// Element matches a single elt range, so delete it
-		*s = (*s)[:idx-1 + copy((*s)[idx-1:], (*s)[idx:])]
+		*s = (*s)[:idx-1+copy((*s)[idx-1:], (*s)[idx:])]
 		return
 	}
-	if e > (*s)[idx-1].b && e < (*s)[idx-1].t - 1 {
+	if e > (*s)[idx-1].b && e < (*s)[idx-1].t-1 {
 		// Inside an existing range, so split it
-		*s = append(*s, Span[T]{})  // add empty element at end
-		copy((*s)[idx:], (*s)[idx-1:])  // move ranges to make space to ...
-		(*s)[idx-1].t, (*s)[idx].b = e, e + 1
+		*s = append(*s, Span[T]{})     // add empty element at end
+		copy((*s)[idx:], (*s)[idx-1:]) // move ranges to make space to ...
+		(*s)[idx-1].t, (*s)[idx].b = e, e+1
 		return
 	}
 	if e == (*s)[idx-1].b {
@@ -31,9 +31,9 @@ func (s *Set[T]) Delete(e T) {
 
 // DeleteRange removes a range of elements from the set
 func (s *Set[T]) DeleteRange(b, t T) {
-	var endMark = minInt[T]()  // indicates top/bottom of range of valid elements
+	var endMark = minInt[T]() // indicates top/bottom of range of valid elements
 	if t <= b && t != endMark {
-		return  // nothing to delete
+		return // nothing to delete
 	}
 
 	// Work out which "range" of Spans to delete.  Note that the range given by
@@ -61,15 +61,15 @@ func (s *Set[T]) DeleteRange(b, t T) {
 		// Split an existing span in two - insert a new span and adjust the ends
 		*s = append(*s, Span[T]{})
 		copy((*s)[bIdx:], (*s)[tIdx:])
-		(*s)[bIdx].b = t  // bottom of above
-		(*s)[tIdx].t = b  // top of below
+		(*s)[bIdx].b = t // bottom of above
+		(*s)[tIdx].t = b // top of below
 		return
 	}
 
 	//assert(tIdx >= bIdx)
 	// Delete all the spans we don't need
 	copy((*s)[bIdx:], (*s)[tIdx:])
-	*s = (*s)[:len(*s) - (tIdx-bIdx)]
+	*s = (*s)[:len(*s)-(tIdx-bIdx)]
 
 	// Adjust the ends of kept adjacent Spans if necessary
 	if bIdx < len(*s) && (t > (*s)[bIdx].b || t == endMark) {

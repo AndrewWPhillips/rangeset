@@ -102,7 +102,7 @@ func (s Set[T]) Values() []T {
 // Note that these use asymmetric ranges where the t (top) field is one more than the
 // last element in the range. The Spans are sorted within the slice and do not overlap.
 func (s Set[T]) Spans() []Span[T] {
-	retval := make([](Span[T]), 0, len(s))
+	retval := make([]Span[T], 0, len(s))
 	for _, v := range s {
 		retval = append(retval, v)
 	}

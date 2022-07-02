@@ -7,16 +7,16 @@ var signedData = map[string]struct {
 	in, expected string
 }{
 	// Note: these test values assume an element type of int8
-	"Empty":     { "{}", "{-128:127}"},
-	"Universal": { "{-128:127}", "{}"},
-	"Zero":      { "{0}", "{-128:-1,1:127}"},
-	"Bottom":    { "{-128}", "{-127:127}"},
-	"Top":       { "{127}", "{-128:126}"},
-	"Both":      { "{-128:-127,126:127}", "{-126:125}"},
-	"TwoBot":    { "{-128:0,2}", "{1,3:127}"},
-	"TwoTop":    { "{-5:-3,100:127}", "{-128:-6,-2:99}"},
-	"TwoInside": { "{-1,1}", "{-128:-2,0,2:127}"},
-	"EndsMid":   { "{-128,0,127}", "{-127:-1,1:126}"},
+	"Empty":     {"{}", "{-128:127}"},
+	"Universal": {"{-128:127}", "{}"},
+	"Zero":      {"{0}", "{-128:-1,1:127}"},
+	"Bottom":    {"{-128}", "{-127:127}"},
+	"Top":       {"{127}", "{-128:126}"},
+	"Both":      {"{-128:-127,126:127}", "{-126:125}"},
+	"TwoBot":    {"{-128:0,2}", "{1,3:127}"},
+	"TwoTop":    {"{-5:-3,100:127}", "{-128:-6,-2:99}"},
+	"TwoInside": {"{-1,1}", "{-128:-2,0,2:127}"},
+	"EndsMid":   {"{-128,0,127}", "{-127:-1,1:126}"},
 }
 
 // TestComplementSigned tests inverting a set that has a signed integer element type
@@ -33,7 +33,7 @@ func TestComplementSigned(t *testing.T) {
 		// Take the complement of the complement and check it matches the original
 		s3 := Complement(s2)
 		Assertf(t, Equal(s3, s), "ComplementSigned: %16s: expected %q got %q\n",
-			"reverse " + name, s, s3)
+			"reverse "+name, s, s3)
 	}
 }
 
@@ -41,14 +41,14 @@ func TestComplementSigned(t *testing.T) {
 var unsignedData = map[string]struct {
 	in, expected string
 }{
-	"Empty":     { "{}", "{0:65535}"},
-	"Bottom":    { "{0}", "{1:65535}"},
-	"Top":       { "{65535}", "{0:65534}"},
-	"Both":      { "{0:5,65530:65535}", "{6:65529}"},
-	"TwoBot":    { "{0:100,200}", "{101:199,201:65535}"},
-	"TwoTop":    { "{10,100:65535}", "{0:9,11:99}"},
-	"TwoInside": { "{100,1000}", "{0:99,101:999,1001:65535}"},
-	"ThreeEnds": { "{0:100,200,300:65535}", "{101:199,201:299}"},
+	"Empty":     {"{}", "{0:65535}"},
+	"Bottom":    {"{0}", "{1:65535}"},
+	"Top":       {"{65535}", "{0:65534}"},
+	"Both":      {"{0:5,65530:65535}", "{6:65529}"},
+	"TwoBot":    {"{0:100,200}", "{101:199,201:65535}"},
+	"TwoTop":    {"{10,100:65535}", "{0:9,11:99}"},
+	"TwoInside": {"{100,1000}", "{0:99,101:999,1001:65535}"},
+	"ThreeEnds": {"{0:100,200,300:65535}", "{101:199,201:299}"},
 }
 
 // TestComplementUnsigned tests inverting a set that has a unsigned integer (uint16) elements
@@ -65,7 +65,7 @@ func TestComplementUnsigned(t *testing.T) {
 		// Take the complement of the complement and check it matches the original
 		s3 := Complement(s2)
 		Assertf(t, Equal(s3, s), "Complement Unsigned: %16s: expected %q got %q\n",
-			"reverse " + name, s, s3)
+			"reverse "+name, s, s3)
 	}
 }
 
@@ -73,7 +73,7 @@ func TestComplementUnsigned(t *testing.T) {
 
 // opData provides table data for testing various operations: Union(), Intersect(), etc
 var opData = map[string]struct {
-	in               []string  // zero or more sets to be combined (intersected, etc)
+	in               []string // zero or more sets to be combined (intersected, etc)
 	union, intersect string
 	sub              string
 }{
@@ -224,4 +224,3 @@ func TestAddSetMethod(t *testing.T) {
 			name, expected, got)
 	}
 }
-
