@@ -9,10 +9,9 @@ import (
 )
 
 // isUnsigned checks whether its type param (must be integer type) is unsigned
-// TODO: make sure this function is inlined (otherwise replace it where used)
+// TODO: ensure inlined and new(T) does not escape to the heap
 func isUnsigned[T Element]() bool {
-	var zero T
-	return zero-1 > 0
+	return *new(T)-1 > 0
 }
 
 // parseInt converts a decimal string to the type of it's type parameter

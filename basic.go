@@ -3,16 +3,14 @@ package rangeset
 // basic.go implements basic functions such as creating range sets, checking if a set contains
 // an element, number of elements, adding (union), subtraction, intersection etc.
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
 type Element interface {
-	constraints.Integer
+	//constraints.Integer
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
 type (
-	Span[T Element] struct{ b, t T } // one "range" (bottom, top+1)
+	Span[T Element] struct{ b, t T } // one range [b..t) ie asymmetric bounds
 	Set[T Element]  []Span[T]        // a set is just a slice of ranges
 )
 
@@ -27,7 +25,7 @@ func Make[T Element](elems ...T) Set[T] {
 }
 
 // NewFromRange creates a new set by specifying an initial range of elements
-// TODO: remove this since we can create use Make[T]() and AddRange()?
+// Equivalent to: Make[T]() then AddRange()
 func NewFromRange[T Element](b, t T) Set[T] {
 	if t <= b {
 		//panic("Invalid range in NewFromRange")
@@ -39,7 +37,7 @@ func NewFromRange[T Element](b, t T) Set[T] {
 
 // Universal returns the set of all elements
 // Note to create an Empty set simply use Make[T]()
-// TODO: remove this since we can simply use Complement(Make[T]())
+// Equivalent to: Complement(Make[T]())
 func Universal[T Element]() Set[T] {
 	var endMark = minInt[T]()
 	// Integer "wrap-around" means that "one more" than max element is min element
@@ -61,17 +59,15 @@ func (s Set[T]) Length() (length uint64, spans int) {
 	return
 }
 
-// Len returns the number of elements, which is undefined if it's more than the largest int.
+// Len returns the number of elements, or -1 if it's more than the largest int.
 // It has time complexity of O(r) where r is the number of ranges, and O(n) in the worst case.
 // Note: As sets are stored using ranges it is easy to have huge sets, where the number of
-// elements is too large for an int.  For portability (in some implementations ints are 32-bits),
-//  if your sets can have 2^31 or more elements then use the Length() method above.
+// elements is too large for an int.  You should prefer using the Length() method above if
+// the number of elements can possibly be >= 2^31 (32-bit systems) or 2^63 (64-bit systems).
 func (s Set[T]) Len() int {
 	length, spans := s.Length()
-	// TODO: decide is we want to panic, return error or leave as non-portable (wraps on overflow)
 	if length > uint64(^uint(0)>>1) || length == 0 && spans > 0 {
-		// TODO: add test for this situation
-		panic("Integer overflow getting number of set elements")
+		return -1
 	}
 	return int(length)
 }
