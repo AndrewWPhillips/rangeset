@@ -1,8 +1,38 @@
 package rangeset
 
 // traverse.go has methods to process the elements of a set
+//  Iterate and Filter methods - use a function to operate on the whole set
+//  Iterator and ReadAll - use channels of the element type
+//  Seq - returns an iterator (Go 1.23) over all elements of the set
 
-import "context"
+import (
+	"context"
+	"iter"
+)
+
+// Seq returns a Go 1.23 iterator of the set elements in order
+func (s Set[T]) Seq() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for _, v := range s {
+			for e := v.b; e < v.t; e++ {
+				if !yield(e) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// SpansSeq returns a Go 1.23 iterator of the ranges of the set
+func (s Set[T]) SpansSeq() iter.Seq[Span[T]] {
+	return func(yield func(Span[T]) bool) {
+		for _, v := range s {
+			if !yield(v) {
+				return
+			}
+		}
+	}
+}
 
 // Iterate calls f on every element in the set.
 func (s Set[T]) Iterate(f func(T)) {

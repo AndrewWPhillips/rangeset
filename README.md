@@ -1,13 +1,16 @@
 Rangeset implements a set container using the Go generics as implemented in Go 1.18.  It is somewhat similar to the
 example Go2Go "sets" package (which was available with the experimental Go2Go release and will probably appear in the 
-standard library in Go 1.19) but uses a slice of ranges rather than a map internally.  But this variation has advantages 
+Go standard library) but uses a slice of ranges rather than a map internally. This variation can have **big** advantages 
 over the standard sets package, such as space-efficiency for some large sets (including dense and sparse sets), elements 
 are returned in order, complement (inverse) operation is supported as are Universal sets, etc.
+
+Update [Go 1.23]: Now included is the `Seq` method which returns an iterator.  This works very much like the `Iterator`
+method which returns an iterator but is simpler by not having to deal with contexts, cancellation, channel cleanup, etc.
 
 ## Go Generics (Parametric Polymorphism)
 
 Parametric polymorphism, or what the Go community now commonly call **generics**, had been proposed for "Go 2" for some
-time. It was officially added to the language in early 2022 (Go 1.18).
+time. It was available as the Go2Go transpiler (2020) before being officially added to Go 1.18 (2022).
 
 Somewhat similarly to other languages, generics allow you to add "type parameters" to *functions* and to *types*. Unlike
 value parameters, type parameters are set (or instantiated) at compile time. This rangeset package implements a generic
@@ -70,7 +73,7 @@ where to add an element. These require a binary search which has time complexity
 ranges in the set. In the worst case, where n/r == 1 (ie each element is in its own range) then the time complexity is
 O(log n).
 
-Hence time complexity is worse than that for a set implemented using a map (hash table) which has time complexity O(1).
+Hence, time complexity is worse than that for a set implemented using a map (hash table) which has time complexity O(1).
 That said, for sets with a small number of ranges the times become similar - ie, as n/r goes to infinity the time
 complexity goes towards O(1). In fact, benchmarks show that lookups are faster for rangesets (with small number of
 ranges) than for sets based on maps.
@@ -81,7 +84,8 @@ same elements, since each range stores two values, but that is not the sort of s
 
 Perhaps not a disadvantage, but another thing to be aware of is that *a rangeset is not safe for concurrent access*. If
 you are accessing a rangeset from more than one goroutine at once, you must protect the access (unless all accesses are
-reads) - for example with a `mutex`.
+reads) - for example with a `mutex`.  Note that maps, slices and the "set" package are the same (not safe for concurrent
+access with protection against data races).
 
 ## Advantages
 
@@ -143,13 +147,13 @@ Type `Set` implements these methods:
 
 `Contains` returns true if the element is in the set
 
-`Len` returns the number of elements as an `int` (may wrap around if larger than maxInt)
+`Len` returns the number of elements as an `int` (-1 if it overflows)
 
 `Length` returns the number of elements as `uint64` and the number of ranges
 
-`Values` returns a slice containing all the elements (in numeric order)
+`Values` [deprecated] returns slice of all the elements - see `Seq`
 
-`Spans` returns a slice of `Span`s containing all the ranges in the set
+`Spans` [deprecated] returns slice of `Span`s (set's ranges) - see `SpansSeq`
 
 `String` returns a string encoding of a rangeset
 
@@ -169,7 +173,11 @@ Type `Set` implements these methods:
 
 `Iterator` returns a <-chan on which every element in the set is placed (in order)
 
-`ReadAll` adds all of the elements read from a <-chan (inverse of Iterator)
+`Seq` returns a Go 1.23 style iterator as an alternative to the `Iterator` method
+
+`SpansSeq` returns a Go 1.23 style iterator of the ranges of the set
+
+`ReadAll` adds all the elements by reading from a <-chan (inverse of Iterator)
 
 ## Functions
 

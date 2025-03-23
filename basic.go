@@ -1,5 +1,9 @@
 package rangeset
 
+import (
+	"slices"
+)
+
 // basic.go implements basic functions such as creating range sets, checking if a set contains
 // an element, number of elements, adding (union), subtraction, intersection etc.
 
@@ -49,7 +53,6 @@ func Universal[T Element]() Set[T] {
 // Note if the element type is 64-bit the size of a universal set is too large to be represented
 // as uint64 - in this case 0 is returned for the number of elements and 1 for the number of spans.
 // It has time complexity of O(r) where r is the number of ranges, and O(n) in the worst case.
-// TODO: this could be made O(1) by caching/updating the length but my gut says to keep it this way
 func (s Set[T]) Length() (length uint64, spans int) {
 	spans = len(s)
 	for _, r := range s {
@@ -84,6 +87,8 @@ func (s Set[T]) Contains(e T) bool {
 // Values returns all the values in the set as a slice (in numeric order).
 // WARNING: if your range set contains large ranges this may take a
 // long time and return a slice with a large number of elements.
+//
+// Deprecated: from Go 12.3 use the Seq() method to obtain an iterator
 func (s Set[T]) Values() []T {
 	retval := make([]T, 0, s.Len())
 	for _, v := range s {
@@ -97,6 +102,8 @@ func (s Set[T]) Values() []T {
 // Spans returns all the ranges of the set as a slice of "Span" structures.
 // Note that these use asymmetric ranges where the t (top) field is one more than the
 // last element in the range. The Spans are sorted within the slice and do not overlap.
+//
+// Deprecated: from Go 1.23 use the SpansSeq() method to obtain an iterator
 func (s Set[T]) Spans() []Span[T] {
 	retval := make([]Span[T], 0, len(s))
 	for _, v := range s {
@@ -107,7 +114,7 @@ func (s Set[T]) Spans() []Span[T] {
 
 // Copy makes a copy of a set
 func (s Set[T]) Copy() Set[T] {
-	return Set[T](s.Spans())
+	return Set[T](slices.Clone(s))
 }
 
 // AddSet finds the union of s with s2 (ie, adds all the elements of s2 to s)

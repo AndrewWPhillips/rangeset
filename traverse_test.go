@@ -2,6 +2,7 @@ package rangeset // ATM we can't do external tests using from rangeset_test
 
 import (
 	"context"
+	"iter"
 	"testing"
 )
 
@@ -32,6 +33,70 @@ var traverseData = map[string]struct {
 	"Range3C": {"{0:3,5:7}", 3},
 	"Range3D": {"{0:3,5:8}", 4},
 	// TODO: add ranges that includes U and E
+}
+
+// TestGo1_23Iterator is almost identical to TestIteratorAll but tests the Seq() method (which
+// returns a Go 1.23 iterator) instead of the Iterator() method (which returns a channel).
+func TestGo1_23Iterator(t *testing.T) {
+	for name, data := range traverseData {
+		in, _ := NewFromString[traverseType](data.in)
+		var got []traverseType
+		for v := range in.Seq() { // use Go 1.23 range over function
+			got = append(got, v)
+		}
+		values := in.Values()
+		Assertf(t, len(got) == len(values), "Go1_23Iterator: %20s: expected %d calls, got %d\n",
+			name, len(values), len(got))
+		for idx, v := range got {
+			Assertf(t, v == values[idx], "Go1_23Iterator: %20s: at position %d expected %v, got %v",
+				name, idx, values[idx], v)
+		}
+	}
+}
+
+// TestGo1_23IteratorStop is like TestIteratorCancel but using Seq method rather than Iterator() method
+func TestGo1_23IteratorStop(t *testing.T) {
+	in := Make[traverseType](7, 42, 73, 86, 99)
+	next, stop := iter.Pull(in.Seq())
+
+	v, ok := next()
+	Assertf(t, ok, "TestGo1_23IteratorStop: Expected first next() status to be true, got %v\n", ok)
+	Assertf(t, v == 7, "TestGo1_23IteratorStop: Expected initial next() value to be 7, got %v\n", v)
+
+	stop()
+	v, ok = next()
+	Assertf(t, !ok, "TestGo1_23IteratorStop: After stop() expected status to be false, got %t\n", ok)
+}
+
+// TestGo1_23IteratorEnd is like TestGo1_23IteratorStop but does not stop the iteration
+func TestGo1_23IteratorEnd(t *testing.T) {
+	in := Make[traverseType](49)
+	next, stop := iter.Pull(in.Seq())
+	defer stop()
+
+	v, ok := next()
+	Assertf(t, ok, "TestGo1_23IteratorEnd: Expected first next() status to be true, got %v\n", ok)
+	Assertf(t, v == 49, "TestGo1_23IteratorEnd: Expected initial next() value to be 49, got %v\n", v)
+
+	v, ok = next()
+	Assertf(t, !ok, "TestGo1_23IteratorEnd: Expected last next() status to be false, got %v\n", ok)
+	Assertf(t, v == 0, "TestGo1_23IteratorEnd: Expected last next() value to be zero, got %v\n", v)
+}
+
+// TestSpansSeq is a simple test of the SpansSeq() method
+func TestSpansSeq(t *testing.T) {
+	in := NewFromRange(-1, 2)
+	next, stop := iter.Pull(in.SpansSeq())
+	defer stop()
+
+	v, ok := next()
+	Assertf(t, ok, "TestSpansSeq: Expected first next() status to be true, got %v\n", ok)
+	Assertf(t, v == Span[int]{-1, 2}, "TestSpansSeq: Expected initial next() value to be {-1,2}, got %v\n", v)
+
+	v, ok = next()
+	Assertf(t, !ok, "TestSpansSeq: Expected last next() status to be false, got %v\n", ok)
+	Assertf(t, v == Span[int]{}, "TestSpansSeq: Expected last next() value to be empty, got %v\n", v)
+
 }
 
 // TestIterateMethod tests that Iterate calls the function on every element using opData.union set
@@ -127,8 +192,8 @@ func TestIteratorCancel(t *testing.T) {
 	Assertf(t, !ok, "IteratorCancel: After cancel expected read status to be false, got %t\n", ok)
 }
 
-// TestChanRoundTrip tests the ReadAll (and Iterator) methods using a "round trip" - ie put the elements of
-// as set onto a chan then reading back into a new set and checking that the sets are the same.
+// TestChanRoundTrip tests the ReadAll (and Iterator) methods using a "round trip" - ie write the elements of
+// a set to a chan that is read into a new set, then checks that the sets are the same.
 func TestChanRoundTrip(t *testing.T) {
 	for name, data := range traverseData {
 		in, _ := NewFromString[traverseType](data.in)

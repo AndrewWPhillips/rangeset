@@ -1,7 +1,7 @@
 package rangeset
 
 import (
-	"golang.org/x/exp/slices" // "slices" // not yet in std lib - see https://github.com/golang/go/issues/48918
+	"slices"
 	"testing"
 )
 
