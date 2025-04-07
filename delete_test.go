@@ -1,6 +1,7 @@
-package rangeset
+package rangeset_test
 
 import (
+	"github.com/andrewwphillips/rangeset"
 	"testing"
 )
 
@@ -33,7 +34,7 @@ var deleteData = map[string]struct {
 // the Delete() method).  It also tests converting a set to a string (using the String() method()).
 func TestTableDelete(t *testing.T) {
 	for name, data := range deleteData {
-		s := Make(data.elts...)
+		s := rangeset.Make(data.elts...)
 		s.Delete(data.deleteElt)
 		got := s.String()
 		Assertf(t, got == data.expected, "TableDelete:%24s: expected %q got %q\n", name, data.expected, got)
@@ -46,7 +47,7 @@ func TestTableDelete(t *testing.T) {
 func TestDeleteRealloc(t *testing.T) {
 	//s := NewFromRange[int](1, 12)
 	// The above causes an error: instantiate୦୦NewFromRange୦int redeclared in this block
-	s := NewFromRange[DeleteElementType](1, 12)
+	s := rangeset.NewFromRange[DeleteElementType](1, 12)
 	// Cause 5 appends - will trigger 2 or 3 memory reallocations
 	s.Delete(8)
 	s.Delete(2)
@@ -114,7 +115,7 @@ var deleteRangeData = map[string]struct {
 // the DeleteRange() method).
 func TestTableDeleteRange(t *testing.T) {
 	for name, data := range deleteRangeData {
-		s := Make(data.elts...)
+		s := rangeset.Make(data.elts...)
 		s.DeleteRange(data.bElt, data.tElt)
 		got := s.String()
 		Assertf(t, got == data.expected, "Delete Range:%24s: expected %q got %q\n", name, data.expected, got)
@@ -136,7 +137,7 @@ var stringDeleteData = map[string]struct {
 // TestTableDeleteFromU does table driven tests deleting elements from Universal set
 func TestTableDeleteFromU(t *testing.T) {
 	for name, data := range stringDeleteData {
-		s, err := NewFromString[uint16](data.in)
+		s, err := rangeset.NewFromString[uint16](data.in)
 		Assertf(t, err == nil, "DeleteFromU:%24s: expected <nil> (no error) got %v\n", name, err)
 		s.Delete(data.toDelete)
 		got := s.String()

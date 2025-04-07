@@ -1,6 +1,9 @@
-package rangeset
+package rangeset_test
 
-import "testing"
+import (
+	"github.com/andrewwphillips/rangeset"
+	"testing"
+)
 
 type (
 	AddType int // set element type used for "add" tests
@@ -16,61 +19,103 @@ const (
 )
 
 var addData = map[string]struct {
-	elts      []AddType       // initial elements in the set
-	addElt    AddType         // element to be added
-	expResult bool            // whether it should have been added or not (already existed)
-	expected  []Span[AddType] // expected set of spans after elt was added
+	elts      []AddType                // initial elements in the set
+	addElt    AddType                  // element to be added
+	expResult bool                     // whether it should have been added or not (already existed)
+	expected  []rangeset.Span[AddType] // expected set of spans after elt was added
 }{
-	"AddEmpty":        {[]AddType{}, 42, true, []Span[AddType]{{42, 43}}},
-	"AddNegative":     {[]AddType{}, -1, true, []Span[AddType]{{-1, 0}}},
-	"Add1Before":      {[]AddType{42}, 40, true, []Span[AddType]{{40, 41}, {42, 43}}},
-	"AddAtStartRange": {[]AddType{42}, 41, true, []Span[AddType]{{41, 43}}},
-	"AddExisting":     {[]AddType{42}, 42, false, []Span[AddType]{{42, 43}}},
-	"AddMin":          {[]AddType{}, minAddType, true, []Span[AddType]{{minAddType, minAddType + 1}}},
-	"AddMax":          {[]AddType{}, maxAddType, true, []Span[AddType]{{maxAddType, minAddType}}}, // wraps around
-	"AddExistingMin":  {[]AddType{minAddType}, minAddType, false, []Span[AddType]{{minAddType, minAddType + 1}}},
-	"AddExistingMax":  {[]AddType{maxAddType}, maxAddType, false, []Span[AddType]{{maxAddType, minAddType}}},                              // wraps around
-	"AddMinToMax":     {[]AddType{maxAddType}, minAddType, true, []Span[AddType]{{minAddType, minAddType + 1}, {maxAddType, minAddType}}}, // wraps around
-	"AddMaxToMin":     {[]AddType{minAddType}, maxAddType, true, []Span[AddType]{{minAddType, minAddType + 1}, {maxAddType, minAddType}}}, // wraps around
-	"AddAtEndRange":   {[]AddType{42}, 43, true, []Span[AddType]{{42, 44}}},
-	"AddAfter":        {[]AddType{42}, 44, true, []Span[AddType]{{42, 43}, {44, 45}}},
+	"AddEmpty":        {[]AddType{}, 42, true, []rangeset.Span[AddType]{{42, 43}}},
+	"AddNegative":     {[]AddType{}, -1, true, []rangeset.Span[AddType]{{-1, 0}}},
+	"Add1Before":      {[]AddType{42}, 40, true, []rangeset.Span[AddType]{{40, 41}, {42, 43}}},
+	"AddAtStartRange": {[]AddType{42}, 41, true, []rangeset.Span[AddType]{{41, 43}}},
+	"AddExisting":     {[]AddType{42}, 42, false, []rangeset.Span[AddType]{{42, 43}}},
+	"AddMin":          {[]AddType{}, minAddType, true, []rangeset.Span[AddType]{{minAddType, minAddType + 1}}},
+	"AddMax": {
+		[]AddType{}, maxAddType, true, []rangeset.Span[AddType]{{maxAddType, minAddType}},
+	}, // wraps around
+	"AddExistingMin": {
+		[]AddType{minAddType}, minAddType, false,
+		[]rangeset.Span[AddType]{{minAddType, minAddType + 1}},
+	},
+	"AddExistingMax": {
+		[]AddType{maxAddType}, maxAddType, false, []rangeset.Span[AddType]{{maxAddType, minAddType}},
+	}, // wraps around
+	"AddMinToMax": {
+		[]AddType{maxAddType}, minAddType, true,
+		[]rangeset.Span[AddType]{{minAddType, minAddType + 1}, {maxAddType, minAddType}},
+	}, // wraps around
+	"AddMaxToMin": {
+		[]AddType{minAddType}, maxAddType, true,
+		[]rangeset.Span[AddType]{{minAddType, minAddType + 1}, {maxAddType, minAddType}},
+	}, // wraps around
+	"AddAtEndRange": {[]AddType{42}, 43, true, []rangeset.Span[AddType]{{42, 44}}},
+	"AddAfter":      {[]AddType{42}, 44, true, []rangeset.Span[AddType]{{42, 43}, {44, 45}}},
 
-	"AddTo2BeforeFirst": {[]AddType{1, 3}, -1, true, []Span[AddType]{{-1, 0}, {1, 2}, {3, 4}}},
-	"AddTo2StartFirst":  {[]AddType{1, 3}, 0, true, []Span[AddType]{{0, 2}, {3, 4}}},
-	"AddTo2InFirst":     {[]AddType{1, 3}, 1, false, []Span[AddType]{{1, 2}, {3, 4}}},
-	"AddTo2Join1And2":   {[]AddType{1, 3}, 2, true, []Span[AddType]{{1, 4}}},
-	"AddTo2In2nd":       {[]AddType{1, 3}, 3, false, []Span[AddType]{{1, 2}, {3, 4}}},
-	"AddTo2EndLast":     {[]AddType{1, 3}, 4, true, []Span[AddType]{{1, 2}, {3, 5}}},
-	"AddTo2AfterLast":   {[]AddType{1, 3}, 5, true, []Span[AddType]{{1, 2}, {3, 4}, {5, 6}}},
+	"AddTo2BeforeFirst": {[]AddType{1, 3}, -1, true, []rangeset.Span[AddType]{{-1, 0}, {1, 2}, {3, 4}}},
+	"AddTo2StartFirst":  {[]AddType{1, 3}, 0, true, []rangeset.Span[AddType]{{0, 2}, {3, 4}}},
+	"AddTo2InFirst":     {[]AddType{1, 3}, 1, false, []rangeset.Span[AddType]{{1, 2}, {3, 4}}},
+	"AddTo2Join1And2":   {[]AddType{1, 3}, 2, true, []rangeset.Span[AddType]{{1, 4}}},
+	"AddTo2In2nd":       {[]AddType{1, 3}, 3, false, []rangeset.Span[AddType]{{1, 2}, {3, 4}}},
+	"AddTo2EndLast":     {[]AddType{1, 3}, 4, true, []rangeset.Span[AddType]{{1, 2}, {3, 5}}},
+	"AddTo2AfterLast":   {[]AddType{1, 3}, 5, true, []rangeset.Span[AddType]{{1, 2}, {3, 4}, {5, 6}}},
 
-	"AddToR2ExtendFirst":     {[]AddType{1, 10, 11}, 2, true, []Span[AddType]{{1, 3}, {10, 12}}},
-	"AddToR2NewRangeBetween": {[]AddType{1, 10, 11}, 3, true, []Span[AddType]{{1, 2}, {3, 4}, {10, 12}}},
-	"AddToR2ExtendBack2nd":   {[]AddType{1, 10, 11}, 9, true, []Span[AddType]{{1, 2}, {9, 12}}},
-	"AddToR2Extend2nd":       {[]AddType{1, 10, 11}, 12, true, []Span[AddType]{{1, 2}, {10, 13}}},
-	"AddToR2AfterLast":       {[]AddType{1, 10, 11}, 1e9, true, []Span[AddType]{{1, 2}, {10, 12}, {1000000000, 1000000001}}},
+	"AddToR2ExtendFirst":     {[]AddType{1, 10, 11}, 2, true, []rangeset.Span[AddType]{{1, 3}, {10, 12}}},
+	"AddToR2NewRangeBetween": {[]AddType{1, 10, 11}, 3, true, []rangeset.Span[AddType]{{1, 2}, {3, 4}, {10, 12}}},
+	"AddToR2ExtendBack2nd":   {[]AddType{1, 10, 11}, 9, true, []rangeset.Span[AddType]{{1, 2}, {9, 12}}},
+	"AddToR2Extend2nd":       {[]AddType{1, 10, 11}, 12, true, []rangeset.Span[AddType]{{1, 2}, {10, 13}}},
+	"AddToR2AfterLast": {
+		[]AddType{1, 10, 11}, 1e9, true,
+		[]rangeset.Span[AddType]{{1, 2}, {10, 12}, {1000000000, 1000000001}},
+	},
 
-	"AddTo3BeforeFirst": {[]AddType{11, 12, 101, 1001, 1002}, 1, true, []Span[AddType]{{1, 2}, {11, 13}, {101, 102}, {1001, 1003}}},
-	"AddTo3StartFirst":  {[]AddType{11, 12, 101, 1001, 1002}, 10, true, []Span[AddType]{{10, 13}, {101, 102}, {1001, 1003}}},
-	"AddTo3Before2nd":   {[]AddType{11, 12, 101, 1001, 1002}, 20, true, []Span[AddType]{{11, 13}, {20, 21}, {101, 102}, {1001, 1003}}},
-	"AddTo3Start2nd":    {[]AddType{11, 12, 101, 1001, 1002}, 100, true, []Span[AddType]{{11, 13}, {100, 102}, {1001, 1003}}},
-	"AddTo3In2nd":       {[]AddType{11, 12, 101, 1001, 1002}, 101, false, []Span[AddType]{{11, 13}, {101, 102}, {1001, 1003}}},
-	"AddTo3End2nd":      {[]AddType{11, 12, 101, 1001, 1002}, 102, true, []Span[AddType]{{11, 13}, {101, 103}, {1001, 1003}}},
-	"AddTo3Before3rd":   {[]AddType{11, 12, 101, 1001, 1002}, 103, true, []Span[AddType]{{11, 13}, {101, 102}, {103, 104}, {1001, 1003}}},
-	"AddTo3End3rd":      {[]AddType{11, 12, 101, 1001, 1002}, 1003, true, []Span[AddType]{{11, 13}, {101, 102}, {1001, 1004}}},
-	"AddTo3After3rd":    {[]AddType{11, 12, 101, 1001, 1002}, 1004, true, []Span[AddType]{{11, 13}, {101, 102}, {1001, 1003}, {1004, 1005}}},
+	"AddTo3BeforeFirst": {
+		[]AddType{11, 12, 101, 1001, 1002}, 1, true,
+		[]rangeset.Span[AddType]{{1, 2}, {11, 13}, {101, 102}, {1001, 1003}},
+	},
+	"AddTo3StartFirst": {
+		[]AddType{11, 12, 101, 1001, 1002}, 10, true,
+		[]rangeset.Span[AddType]{{10, 13}, {101, 102}, {1001, 1003}},
+	},
+	"AddTo3Before2nd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 20, true,
+		[]rangeset.Span[AddType]{{11, 13}, {20, 21}, {101, 102}, {1001, 1003}},
+	},
+	"AddTo3Start2nd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 100, true,
+		[]rangeset.Span[AddType]{{11, 13}, {100, 102}, {1001, 1003}},
+	},
+	"AddTo3In2nd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 101, false,
+		[]rangeset.Span[AddType]{{11, 13}, {101, 102}, {1001, 1003}},
+	},
+	"AddTo3End2nd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 102, true,
+		[]rangeset.Span[AddType]{{11, 13}, {101, 103}, {1001, 1003}},
+	},
+	"AddTo3Before3rd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 103, true,
+		[]rangeset.Span[AddType]{{11, 13}, {101, 102}, {103, 104}, {1001, 1003}},
+	},
+	"AddTo3End3rd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 1003, true,
+		[]rangeset.Span[AddType]{{11, 13}, {101, 102}, {1001, 1004}},
+	},
+	"AddTo3After3rd": {
+		[]AddType{11, 12, 101, 1001, 1002}, 1004, true,
+		[]rangeset.Span[AddType]{{11, 13}, {101, 102}, {1001, 1003}, {1004, 1005}},
+	},
 }
 
-// TestTableAdd is a table driven test that adds an element (using Add() method) to a set taking data from the above
-//              addData map.  It also tests the String() method.
+// TestTableAdd is a table driven test that adds an element (using Add() method) to a set taking data from the above addData map.
 func TestTableAdd(t *testing.T) {
 	for name, data := range addData {
-		s := Make(data.elts...)
+		s := rangeset.Make(data.elts...)
 		gotResult := s.Add(data.addElt)
 		Assertf(t, gotResult == data.expResult, "%20s: expected result %t, got %t", name, data.expResult, gotResult)
 		Assertf(t, len(s) == len(data.expected), "%20s: expected %d ranges, got %d", name, len(data.expected), len(s))
 		for i := 0; i < len(data.expected); i++ {
-			Assertf(t, s[i].b == data.expected[i].b, "%20s: range %d got start=%v (expected %v)\n", name, i, s[i].b, data.expected[i].b)
-			Assertf(t, s[i].t == data.expected[i].t, "%20s: range %d got end=%v (expected %v)\n", name, i, s[i].t, data.expected[i].t)
+			Assertf(t, s[i].Bot == data.expected[i].Bot, "%20s: range %d got start=%v (expected %v)\n", name, i, s[i].Bot, data.expected[i].Bot)
+			Assertf(t, s[i].Top == data.expected[i].Top, "%20s: range %d got end=%v (expected %v)\n", name, i, s[i].Top, data.expected[i].Top)
 		}
 	}
 }
@@ -80,10 +125,10 @@ func TestTableAdd(t *testing.T) {
 // String() method and the NewFromString() and Equal() functions.
 func TestRoundTrip1(t *testing.T) {
 	for name, data := range addData {
-		s := Make(data.elts...)
-		got, err := NewFromString[AddType](s.String())
+		s := rangeset.Make(data.elts...)
+		got, err := rangeset.NewFromString[AddType](s.String())
 		Assertf(t, err == nil, "%20s: Round trip string parsing expected no error, got %v", name, err)
-		same := Equal(s, got)
+		same := rangeset.Equal(s, got)
 		Assertf(t, same, "%20s: After round trip comparing %q: expected true, got %t", name, s.String(), same)
 	}
 }
@@ -91,7 +136,7 @@ func TestRoundTrip1(t *testing.T) {
 // TestAddReallocStart checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the beginning of the slice
 func TestAddReallocStart(t *testing.T) {
-	s := NewFromRange[AddType](20, 40)
+	s := rangeset.NewFromRange[AddType](20, 40)
 	s.Add(2)
 	s.Add(4)
 	s.Add(6)
@@ -106,7 +151,7 @@ func TestAddReallocStart(t *testing.T) {
 // TestAddReallocMiddle checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges in the middle of the slice
 func TestAddReallocMiddle(t *testing.T) {
-	s, _ := NewFromString[AddType]("{10:20,40:50}")
+	s, _ := rangeset.NewFromString[AddType]("{10:20,40:50}")
 	s.Add(22)
 	s.Add(24)
 	s.Add(26)
@@ -122,7 +167,7 @@ func TestAddReallocMiddle(t *testing.T) {
 // TestAddReallocEnd checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the end of the slice
 func TestAddReallocEnd(t *testing.T) {
-	s := Make[AddType](10)
+	s := rangeset.Make[AddType](10)
 	s.Add(22)
 	s.Add(24)
 	s.Add(26)
@@ -137,14 +182,14 @@ func TestAddReallocEnd(t *testing.T) {
 
 // TestAddUniversal tests adding to the start and end of the universal set
 func TestAddUniversal(t *testing.T) {
-	U := Complement(Make[AddType]()) // complement of empty set is universal set
+	U := rangeset.Complement(rangeset.Make[AddType]()) // complement of empty set is universal set
 	s := U.Copy()
 	got := s.Add(maxAddType)
 	Assertf(t, got == false, "%24s: expected false got %v\n", "AddUniversal max", got)
 	got = s.Add(minAddType)
 	Assertf(t, got == false, "%24s: expected false got %v\n", "AddUniversal min", got)
 
-	Assertf(t, Equal(s, U), "%24s: after adding to U expected %v got %v\n", "AddUniversal", U, s)
+	Assertf(t, rangeset.Equal(s, U), "%24s: after adding to U expected %v got %v\n", "AddUniversal", U, s)
 }
 
 var rangeData = map[string]struct {
@@ -188,7 +233,7 @@ var rangeData = map[string]struct {
 // the AddRange() method).  It also tests converting a set to a string (using the String() method()).
 func TestTableAddRange(t *testing.T) {
 	for name, data := range rangeData {
-		s := Make(data.elts...)
+		s := rangeset.Make(data.elts...)
 		s.AddRange(data.bot, data.top)
 		got := s.String()
 		Assertf(t, got == data.expected, "%24s: expected %q got %q\n", name, data.expected, got)
@@ -200,9 +245,9 @@ func TestTableAddRange(t *testing.T) {
 // String() method and the NewFromString() and Equal() functions.
 func TestRoundTrip2(t *testing.T) {
 	for name, data := range rangeData {
-		s := Make(data.elts...)
-		got, _ := NewFromString[AddType](s.String())
-		same := Equal(s, got)
+		s := rangeset.Make(data.elts...)
+		got, _ := rangeset.NewFromString[AddType](s.String())
+		same := rangeset.Equal(s, got)
 		Assertf(t, same, "%20s: After round trip comparing %q: expected true, got %t", name, s.String(), same)
 	}
 }
@@ -210,7 +255,7 @@ func TestRoundTrip2(t *testing.T) {
 // TestAddRangeReallocStart checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the beginning of the slice
 func TestAddRangeReallocStart(t *testing.T) {
-	s := NewFromRange[AddType](20, 40)
+	s := rangeset.NewFromRange[AddType](20, 40)
 	s.AddRange(2, 3)
 	s.AddRange(4, 5)
 	s.AddRange(6, 7)
@@ -225,7 +270,7 @@ func TestAddRangeReallocStart(t *testing.T) {
 // TestAddRangeReallocMiddle checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges in the middle of the slice
 func TestAddRangeReallocMiddle(t *testing.T) {
-	s, _ := NewFromString[AddType]("{10:20,40:50}")
+	s, _ := rangeset.NewFromString[AddType]("{10:20,40:50}")
 	s.AddRange(22, 23)
 	s.AddRange(24, 25)
 	s.AddRange(26, 27)
@@ -241,7 +286,7 @@ func TestAddRangeReallocMiddle(t *testing.T) {
 // TestAddRangeReallocEnd checks the special case where append() on the Span slice has to
 // reallocate memory due to inserting lots of ranges at the end of the slice
 func TestAddRangeReallocEnd(t *testing.T) {
-	s := Make[AddType](10)
+	s := rangeset.Make[AddType](10)
 	s.AddRange(22, 23)
 	s.AddRange(24, 25)
 	s.AddRange(26, 27)

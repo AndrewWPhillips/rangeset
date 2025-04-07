@@ -14,7 +14,7 @@ import (
 func (s Set[T]) Seq() iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for _, v := range s {
-			for e := v.b; e < v.t; e++ {
+			for e := v.Bot; e < v.Top; e++ {
 				if !yield(e) {
 					return
 				}
@@ -37,7 +37,7 @@ func (s Set[T]) SpansSeq() iter.Seq[Span[T]] {
 // Iterate calls f on every element in the set.
 func (s Set[T]) Iterate(f func(T)) {
 	for _, v := range s {
-		for e := v.b; e < v.t; e++ {
+		for e := v.Bot; e < v.Top; e++ {
 			f(e)
 		}
 	}
@@ -49,7 +49,7 @@ func (s Set[T]) Iterate(f func(T)) {
 func (s *Set[T]) Filter(f func(T) bool) {
 	toDelete := Make[T]()
 	for _, v := range *s {
-		for e := v.b; e < v.t; e++ {
+		for e := v.Bot; e < v.Top; e++ {
 			if !f(e) {
 				toDelete.Add(e) // keep track of elts to delete
 			}
@@ -69,7 +69,7 @@ func (s Set[T]) Iterator(ctx context.Context) <-chan T {
 	go func(ch chan<- T) {
 		defer close(ch)
 		for _, v := range s {
-			for e := v.b; e < v.t; e++ {
+			for e := v.Bot; e < v.Top; e++ {
 				select {
 				case <-ctx.Done():
 					return

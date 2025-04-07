@@ -92,10 +92,10 @@ func (s Set[T]) String() string {
 		} else {
 			first = false
 		}
-		retval.WriteString(intToString(r.b))
-		if r.t != r.b+1 {
+		retval.WriteString(intToString(r.Bot))
+		if r.Top != r.Bot+1 {
 			retval.WriteRune(':')
-			retval.WriteString(intToString(r.t - 1))
+			retval.WriteString(intToString(r.Top - 1))
 		}
 	}
 	retval.WriteRune('}')

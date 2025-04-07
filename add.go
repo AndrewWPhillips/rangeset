@@ -9,11 +9,11 @@ func (s *Set[T]) Add(e T) bool {
 	idx := s.bsearch(e)
 	//assert(idx >= 0 && idx <= len(*s))
 	var endMark = minInt[T]() // in a range it flags: bottom/top of all valid elements
-	if idx == 0 || (e > (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
+	if idx == 0 || (e > (*s)[idx-1].Top && (*s)[idx-1].Top != endMark) {
 		// New element is before range [idx] and after range [idx-1] (+ not just past end)
-		if idx < len(*s) && e == (*s)[idx].b-1 {
+		if idx < len(*s) && e == (*s)[idx].Bot-1 {
 			// Extend range [idx] down by one
-			(*s)[idx].b = e
+			(*s)[idx].Bot = e
 		} else {
 			// Add new range between [idx-1] and [idx] (incl. before 1st and after last)
 			*s = append(*s, Span[T]{})
@@ -23,17 +23,17 @@ func (s *Set[T]) Add(e T) bool {
 		return true
 	}
 	// assert(idx > 0)
-	if e == (*s)[idx-1].t && (*s)[idx-1].t != endMark {
+	if e == (*s)[idx-1].Top && (*s)[idx-1].Top != endMark {
 		// New element is just past the end of range [idx-1]
-		if idx < len(*s) && e == (*s)[idx].b-1 {
+		if idx < len(*s) && e == (*s)[idx].Bot-1 {
 			// New element joins range [idx-1] and [idx] together
-			e = (*s)[idx-1].b              // save beginning of previous range
+			e = (*s)[idx-1].Bot            // save beginning of previous range
 			copy((*s)[idx-1:], (*s)[idx:]) // move rest of the ranges down
-			(*s)[idx-1].b = e              // restore beginning of current
+			(*s)[idx-1].Bot = e            // restore beginning of current
 			*s = (*s)[:len(*s)-1]          // remove duplicate end range
 		} else {
 			// Extend range [idx-1] up by one
-			(*s)[idx-1].t = e + 1
+			(*s)[idx-1].Top = e + 1
 		}
 		return true
 	}
@@ -56,7 +56,7 @@ func (s *Set[T]) AddRange(b, t T) {
 	var bIdx, tIdx int
 	bIdx = s.bsearch(b)
 	//assert(bIdx <= len(*s) && tIdx <= len(*s) // must be valid Span index or 1 past end
-	if bIdx == 0 || (b > (*s)[bIdx-1].t && (*s)[bIdx-1].t != endMark) {
+	if bIdx == 0 || (b > (*s)[bIdx-1].Top && (*s)[bIdx-1].Top != endMark) {
 		bIdx++ // past the end of the idx-1 span
 	}
 	if t == endMark {
@@ -74,23 +74,23 @@ func (s *Set[T]) AddRange(b, t T) {
 		//assert(bIdx == tIdx + 1, "tIdx should only be one less than bIdx")
 		*s = append(*s, Span[T]{})
 		copy((*s)[bIdx:], (*s)[tIdx:])
-		(*s)[tIdx].b, (*s)[tIdx].t = b, t
+		(*s)[tIdx].Bot, (*s)[tIdx].Top = b, t
 		return
 	}
 
 	//assert(tIdx > 0 && tIdx >= bIdx)
-	if (t < (*s)[tIdx-1].t && t != endMark) || (*s)[tIdx-1].t == endMark {
-		t = (*s)[tIdx-1].t
+	if (t < (*s)[tIdx-1].Top && t != endMark) || (*s)[tIdx-1].Top == endMark {
+		t = (*s)[tIdx-1].Top
 	}
 	// Delete the spans we don't need
 	copy((*s)[bIdx:], (*s)[tIdx:])
 	*s = (*s)[:len(*s)-(tIdx-bIdx)]
 
 	// Adjust, as necessary, the ends of the retained span
-	if bIdx > 0 && b < (*s)[bIdx-1].b {
-		(*s)[bIdx-1].b = b
+	if bIdx > 0 && b < (*s)[bIdx-1].Bot {
+		(*s)[bIdx-1].Bot = b
 	}
-	if bIdx > 0 && (t > (*s)[bIdx-1].t || t == endMark) && (*s)[bIdx-1].t != endMark {
-		(*s)[bIdx-1].t = t
+	if bIdx > 0 && (t > (*s)[bIdx-1].Top || t == endMark) && (*s)[bIdx-1].Top != endMark {
+		(*s)[bIdx-1].Top = t
 	}
 }

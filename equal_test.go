@@ -1,6 +1,7 @@
-package rangeset
+package rangeset_test
 
 import (
+	"github.com/andrewwphillips/rangeset"
 	"slices"
 	"testing"
 )
@@ -62,12 +63,12 @@ var notEqualData = map[string]struct {
 // Note that TestRoundTripEqual1(), TestRoundTripEqual2(), etc test cases where Equal() should return true.
 func TestNotEqual(t *testing.T) {
 	for name, data := range notEqualData {
-		set1, set2 := Make(data.left...), Make(data.right...)
-		got := Equal(set1, set2)
+		set1, set2 := rangeset.Make(data.left...), rangeset.Make(data.right...)
+		got := rangeset.Equal(set1, set2)
 		Assertf(t, !got, "%20s: Expecting Equal() on different sets (%s and %s) to return false, got %t",
 			name, set1.String(), set2.String(), got)
 		// Also do reverse comparison
-		got = Equal(set2, set1)
+		got = rangeset.Equal(set2, set1)
 		Assertf(t, !got, "%20s: Expecting Equal() on different sets (%s and %s) to return false, got %t",
 			name, set2.String(), set2.String(), got)
 	}
@@ -77,9 +78,9 @@ func TestNotEqual(t *testing.T) {
 // to a string then back to a set.  This provides extra tests of Equal() (as well as String() and NewFromString()).
 func TestRoundTripLeft(t *testing.T) {
 	for name, data := range notEqualData {
-		s := Make(data.left...)
-		got, _ := NewFromString[EqualElementType](s.String())
-		same := Equal(s, got)
+		s := rangeset.Make(data.left...)
+		got, _ := rangeset.NewFromString[EqualElementType](s.String())
+		same := rangeset.Equal(s, got)
 		Assertf(t, same, "%20s: After round trip comparing (1st) %q: expected true, got %t", name, s.String(), same)
 	}
 }
@@ -87,9 +88,9 @@ func TestRoundTripLeft(t *testing.T) {
 // TestRoundTripRight is like TestRoundTripLetf (above) but uses the 2nd (right) set from the notEqualData table.
 func TestRoundTripEqual2(t *testing.T) {
 	for name, data := range notEqualData {
-		s := Make(data.right...)
-		got, _ := NewFromString[EqualElementType](s.String())
-		same := Equal(s, got)
+		s := rangeset.Make(data.right...)
+		got, _ := rangeset.NewFromString[EqualElementType](s.String())
+		same := rangeset.Equal(s, got)
 		Assertf(t, same, "%20s: After round trip comparing (2nd) %q: expected true, got %t", name, s.String(), same)
 	}
 }
@@ -98,7 +99,7 @@ func TestRoundTripEqual2(t *testing.T) {
 // Note that this relies on the values in data.left being sorted without duplicates
 func TestValuesLeft(t *testing.T) {
 	for name, data := range notEqualData {
-		s := Make(data.left...)
+		s := rangeset.Make(data.left...)
 		got := s.Values()
 		Assertf(t, slices.Equal(data.left, got), "Values test %20s: expected result %v, got %v", name, data.left, got)
 	}
@@ -108,7 +109,7 @@ func TestValuesLeft(t *testing.T) {
 // Note that this relies on the values in data.right being sorted without duplicates
 func TestValuesRight(t *testing.T) {
 	for name, data := range notEqualData {
-		s := Make(data.right...)
+		s := rangeset.Make(data.right...)
 		got := s.Values()
 		Assertf(t, slices.Equal(data.right, got), "Values test %20s: expected result %v, got %v", name, data.right, got)
 	}

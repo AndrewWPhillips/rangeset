@@ -10,12 +10,12 @@ import (
 type Element interface {
 	//constraints.Integer
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
 type (
-	Span[T Element] struct{ b, t T } // one range [b..t) ie asymmetric bounds
-	Set[T Element]  []Span[T]        // a set is just a slice of ranges
+	Span[T Element] struct{ Bot, Top T } // one range [b..t) ie asymmetric bounds
+	Set[T Element]  []Span[T]            // a set is just a slice of ranges
 )
 
 // Make creates a new set optionally taking initial element(s)
@@ -57,7 +57,7 @@ func (s Set[T]) Length() (length uint64, spans int) {
 	spans = len(s)
 	for _, r := range s {
 		// assert(r.t > r.b)
-		length += uint64(r.t - r.b)
+		length += uint64(r.Top - r.Bot)
 	}
 	return
 }
@@ -81,7 +81,7 @@ func (s Set[T]) Len() int {
 func (s Set[T]) Contains(e T) bool {
 	idx := s.bsearch(e)
 	var endMark = minInt[T]() // in a range it flags: bottom/top of all valid elements
-	return idx > 0 && (e < s[idx-1].t || s[idx-1].t == endMark)
+	return idx > 0 && (e < s[idx-1].Top || s[idx-1].Top == endMark)
 }
 
 // Values returns all the values in the set as a slice (in numeric order).
@@ -92,7 +92,7 @@ func (s Set[T]) Contains(e T) bool {
 func (s Set[T]) Values() []T {
 	retval := make([]T, 0, s.Len())
 	for _, v := range s {
-		for e := v.b; e < v.t; e++ {
+		for e := v.Bot; e < v.Top; e++ {
 			retval = append(retval, e)
 		}
 	}
@@ -120,14 +120,14 @@ func (s Set[T]) Copy() Set[T] {
 // AddSet finds the union of s with s2 (ie, adds all the elements of s2 to s)
 func (s *Set[T]) AddSet(s2 Set[T]) {
 	for _, v := range s2 {
-		s.AddRange(v.b, v.t)
+		s.AddRange(v.Bot, v.Top)
 	}
 }
 
 // SubSet removes all elements of s2 from s
 func (s *Set[T]) SubSet(s2 Set[T]) {
 	for _, v := range s2 {
-		s.DeleteRange(v.b, v.t)
+		s.DeleteRange(v.Bot, v.Top)
 	}
 }
 
@@ -136,10 +136,10 @@ func (s *Set[T]) Intersect(s2 Set[T]) {
 	endMark := minInt[T]()
 	bDel := endMark
 	for _, v := range s2 {
-		if bDel != endMark || v.b != endMark {
-			s.DeleteRange(bDel, v.b)
+		if bDel != endMark || v.Bot != endMark {
+			s.DeleteRange(bDel, v.Bot)
 		}
-		bDel = v.t
+		bDel = v.Top
 	}
 	if len(s2) == 0 || bDel != endMark {
 		s.DeleteRange(bDel, endMark)

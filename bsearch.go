@@ -14,7 +14,7 @@ func (s Set[T]) bsearch(value T) int {
 	bot, top := 0, len(s)
 	for bot < top {
 		curr := bot + (top-bot)/2
-		if value < s[curr].b {
+		if value < s[curr].Bot {
 			top = curr
 		} else {
 			bot = curr + 1

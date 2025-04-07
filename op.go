@@ -9,7 +9,7 @@ func Equal[T Element](s1, s2 Set[T]) bool {
 		return false
 	}
 	for idx := 0; idx < len(s1); idx++ {
-		if s1[idx].b != s2[idx].b || s1[idx].t != s2[idx].t {
+		if s1[idx].Bot != s2[idx].Bot || s1[idx].Top != s2[idx].Top {
 			return false
 		}
 	}
@@ -31,10 +31,10 @@ func Complement[T Element](s Set[T]) Set[T] {
 	}
 	bot := endMark
 	for idx, v := range s {
-		if idx > 0 || v.b != endMark {
-			retval = append(retval, Span[T]{bot, v.b})
+		if idx > 0 || v.Bot != endMark {
+			retval = append(retval, Span[T]{bot, v.Bot})
 		}
-		bot = v.t
+		bot = v.Top
 	}
 	if bot != endMark {
 		retval = append(retval, Span[T]{bot, endMark})

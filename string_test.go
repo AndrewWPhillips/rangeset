@@ -1,6 +1,9 @@
-package rangeset
+package rangeset_test
 
-import "testing"
+import (
+	"github.com/andrewwphillips/rangeset"
+	"testing"
+)
 
 type StringElementType int16
 
@@ -32,7 +35,7 @@ var stringData = map[string]struct {
 // String() and NewFromString() in "round trip" tests like TestRoundTripAdd() etc.
 func TestString(t *testing.T) {
 	for name, data := range stringData {
-		s, _ := NewFromString[StringElementType](data.in)
+		s, _ := rangeset.NewFromString[StringElementType](data.in)
 		got := s.String()
 		Assertf(t, got == data.expected, "TestString: %20s: expected %q got %q", name, data.expected, got)
 	}
@@ -59,7 +62,7 @@ var stringErrorData = map[string]struct {
 // TestStringError checks that malformed set strings cause an error in NewFromString
 func TestStringError(t *testing.T) {
 	for name, data := range stringErrorData {
-		_, err := NewFromString[StringElementType](data.in)
+		_, err := rangeset.NewFromString[StringElementType](data.in)
 		Assertf(t, err != nil, "StringError: %16s: expected an error got %v", name, err)
 	}
 }

@@ -1,6 +1,9 @@
-package rangeset
+package rangeset_test
 
-import "testing"
+import (
+	"github.com/andrewwphillips/rangeset"
+	"testing"
+)
 
 // signedData contains table data specifically for testing Complement() on sets of int8
 var signedData = map[string]struct {
@@ -22,17 +25,17 @@ var signedData = map[string]struct {
 // TestComplementSigned tests inverting a set that has a signed integer element type
 func TestComplementSigned(t *testing.T) {
 	for name, data := range signedData {
-		s, _ := NewFromString[int8](data.in)
+		s, _ := rangeset.NewFromString[int8](data.in)
 
 		// Take the complement of the set and check it is as expected
-		s2 := Complement(s)
-		expected, _ := NewFromString[int8](data.expected)
-		Assertf(t, Equal(s2, expected), "ComplementSigned: %16s: expected %q got %q\n",
+		s2 := rangeset.Complement(s)
+		expected, _ := rangeset.NewFromString[int8](data.expected)
+		Assertf(t, rangeset.Equal(s2, expected), "ComplementSigned: %16s: expected %q got %q\n",
 			name, expected, s2)
 
 		// Take the complement of the complement and check it matches the original
-		s3 := Complement(s2)
-		Assertf(t, Equal(s3, s), "ComplementSigned: %16s: expected %q got %q\n",
+		s3 := rangeset.Complement(s2)
+		Assertf(t, rangeset.Equal(s3, s), "ComplementSigned: %16s: expected %q got %q\n",
 			"reverse "+name, s, s3)
 	}
 }
@@ -54,17 +57,17 @@ var unsignedData = map[string]struct {
 // TestComplementUnsigned tests inverting a set that has a unsigned integer (uint16) elements
 func TestComplementUnsigned(t *testing.T) {
 	for name, data := range unsignedData {
-		s, _ := NewFromString[uint16](data.in)
+		s, _ := rangeset.NewFromString[uint16](data.in)
 
 		// Take the complement of the set and check it is as expected
-		s2 := Complement(s)
-		expected, _ := NewFromString[uint16](data.expected)
-		Assertf(t, Equal(s2, expected), "Complement Unsigned: %16s: expected %q got %q\n",
+		s2 := rangeset.Complement(s)
+		expected, _ := rangeset.NewFromString[uint16](data.expected)
+		Assertf(t, rangeset.Equal(s2, expected), "Complement Unsigned: %16s: expected %q got %q\n",
 			name, expected, s2)
 
 		// Take the complement of the complement and check it matches the original
-		s3 := Complement(s2)
-		Assertf(t, Equal(s3, s), "Complement Unsigned: %16s: expected %q got %q\n",
+		s3 := rangeset.Complement(s2)
+		Assertf(t, rangeset.Equal(s3, s), "Complement Unsigned: %16s: expected %q got %q\n",
 			"reverse "+name, s, s3)
 	}
 }
@@ -115,25 +118,25 @@ var opData = map[string]struct {
 // TestUnionFunction performs a union of opData table's "in" sets and compares to "union" set
 func TestUnionFunction(t *testing.T) {
 	for name, data := range opData {
-		var sets []Set[uint]
-		expected, _ := NewFromString[uint](data.union)
+		var sets []rangeset.Set[uint]
+		expected, _ := rangeset.NewFromString[uint](data.union)
 
 		for _, str := range data.in {
-			s, _ := NewFromString[uint](str)
+			s, _ := rangeset.NewFromString[uint](str)
 			sets = append(sets, s)
 		}
-		got := Union(sets...)
-		Assertf(t, Equal(got, expected), "        Union: %20s: expected %q got %q\n",
+		got := rangeset.Union(sets...)
+		Assertf(t, rangeset.Equal(got, expected), "        Union: %20s: expected %q got %q\n",
 			name, expected, got)
 
 		// Reverse the order and check we get the same result
 		sets = nil
 		for idx := len(data.in); idx > 0; idx-- {
-			s, _ := NewFromString[uint](data.in[idx-1])
+			s, _ := rangeset.NewFromString[uint](data.in[idx-1])
 			sets = append(sets, s)
 		}
-		got = Union(sets...)
-		Assertf(t, Equal(got, expected), "Reverse Union: %20s: expected %q got %q\n",
+		got = rangeset.Union(sets...)
+		Assertf(t, rangeset.Equal(got, expected), "Reverse Union: %20s: expected %q got %q\n",
 			name, expected, got)
 	}
 }
@@ -141,25 +144,25 @@ func TestUnionFunction(t *testing.T) {
 // TestIntersectFunction performs the intersection of opData table's "in" sets and compares to "intersect" set
 func TestIntersectFunction(t *testing.T) {
 	for name, data := range opData {
-		var sets []Set[uint]
-		expected, _ := NewFromString[uint](data.intersect)
+		var sets []rangeset.Set[uint]
+		expected, _ := rangeset.NewFromString[uint](data.intersect)
 
 		for _, str := range data.in {
-			s, _ := NewFromString[uint](str)
+			s, _ := rangeset.NewFromString[uint](str)
 			sets = append(sets, s)
 		}
-		got := Intersect(sets...)
-		Assertf(t, Equal(got, expected), "For Intersect: %20s: expected %q got %q\n",
+		got := rangeset.Intersect(sets...)
+		Assertf(t, rangeset.Equal(got, expected), "For Intersect: %20s: expected %q got %q\n",
 			name, expected, got)
 
 		// Reverse the order and check we get the same result
 		sets = nil
 		for idx := len(data.in); idx > 0; idx-- {
-			s, _ := NewFromString[uint](data.in[idx-1])
+			s, _ := rangeset.NewFromString[uint](data.in[idx-1])
 			sets = append(sets, s)
 		}
-		got = Intersect(sets...)
-		Assertf(t, Equal(got, expected), "Rev Intersect: %20s: expected %q got %q\n",
+		got = rangeset.Intersect(sets...)
+		Assertf(t, rangeset.Equal(got, expected), "Rev Intersect: %20s: expected %q got %q\n",
 			name, expected, got)
 	}
 }
@@ -167,9 +170,9 @@ func TestIntersectFunction(t *testing.T) {
 // TestCopyMethod checks copying of a set using the "union" field of the above opData table
 func TestCopyMethod(t *testing.T) {
 	for name, data := range opData {
-		orig, _ := NewFromString[uint](data.union)
+		orig, _ := rangeset.NewFromString[uint](data.union)
 		got := orig.Copy()
-		Assertf(t, Equal(orig, got), " Set Copy: %20s: copying %q got %q\n",
+		Assertf(t, rangeset.Equal(orig, got), " Set Copy: %20s: copying %q got %q\n",
 			name, orig, got)
 	}
 }
@@ -180,13 +183,13 @@ func TestIntersectMethod(t *testing.T) {
 		if len(data.in) == 0 {
 			continue
 		}
-		got, _ := NewFromString[uint](data.in[0])
+		got, _ := rangeset.NewFromString[uint](data.in[0])
 		for idx := 1; idx < len(data.in); idx++ {
-			s, _ := NewFromString[uint](data.in[idx])
+			s, _ := rangeset.NewFromString[uint](data.in[idx])
 			got.Intersect(s)
 		}
-		expected, _ := NewFromString[uint](data.intersect)
-		Assertf(t, Equal(got, expected), " Intersect: %20s: expected %q got %q\n",
+		expected, _ := rangeset.NewFromString[uint](data.intersect)
+		Assertf(t, rangeset.Equal(got, expected), " Intersect: %20s: expected %q got %q\n",
 			name, expected, got)
 	}
 }
@@ -197,13 +200,13 @@ func TestSubSetMethod(t *testing.T) {
 		if len(data.in) == 0 {
 			continue
 		}
-		got, _ := NewFromString[uint](data.in[0])
+		got, _ := rangeset.NewFromString[uint](data.in[0])
 		for idx := 1; idx < len(data.in); idx++ {
-			s, _ := NewFromString[uint](data.in[idx])
+			s, _ := rangeset.NewFromString[uint](data.in[idx])
 			got.SubSet(s)
 		}
-		expected, _ := NewFromString[uint](data.sub)
-		Assertf(t, Equal(got, expected), "    SubSet: %20s: expected %q got %q\n",
+		expected, _ := rangeset.NewFromString[uint](data.sub)
+		Assertf(t, rangeset.Equal(got, expected), "    SubSet: %20s: expected %q got %q\n",
 			name, expected, got)
 	}
 }
@@ -214,13 +217,13 @@ func TestAddSetMethod(t *testing.T) {
 		if len(data.in) == 0 {
 			continue
 		}
-		got, _ := NewFromString[uint](data.in[0])
+		got, _ := rangeset.NewFromString[uint](data.in[0])
 		for idx := 1; idx < len(data.in); idx++ {
-			s, _ := NewFromString[uint](data.in[idx])
+			s, _ := rangeset.NewFromString[uint](data.in[idx])
 			got.AddSet(s)
 		}
-		expected, _ := NewFromString[uint](data.union)
-		Assertf(t, Equal(got, expected), "    AddSet: %20s: expected %q got %q\n",
+		expected, _ := rangeset.NewFromString[uint](data.union)
+		Assertf(t, rangeset.Equal(got, expected), "    AddSet: %20s: expected %q got %q\n",
 			name, expected, got)
 	}
 }

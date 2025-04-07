@@ -6,27 +6,27 @@ package rangeset
 func (s *Set[T]) Delete(e T) {
 	var endMark = minInt[T]() // indicates top/bottom of range of valid elements
 	idx := s.bsearch(e)
-	if idx == 0 || (e >= (*s)[idx-1].t && (*s)[idx-1].t != endMark) {
+	if idx == 0 || (e >= (*s)[idx-1].Top && (*s)[idx-1].Top != endMark) {
 		return // outside any existing range
 	}
-	if e == (*s)[idx-1].b && e == (*s)[idx-1].t-1 {
+	if e == (*s)[idx-1].Bot && e == (*s)[idx-1].Top-1 {
 		// Element matches a single elt range, so delete it
 		*s = (*s)[:idx-1+copy((*s)[idx-1:], (*s)[idx:])]
 		return
 	}
-	if e > (*s)[idx-1].b && e < (*s)[idx-1].t-1 {
+	if e > (*s)[idx-1].Bot && e < (*s)[idx-1].Top-1 {
 		// Inside an existing range, so split it
 		*s = append(*s, Span[T]{})     // add empty element at end
 		copy((*s)[idx:], (*s)[idx-1:]) // move ranges to make space to ...
-		(*s)[idx-1].t, (*s)[idx].b = e, e+1
+		(*s)[idx-1].Top, (*s)[idx].Bot = e, e+1
 		return
 	}
-	if e == (*s)[idx-1].b {
-		(*s)[idx-1].b = e + 1
+	if e == (*s)[idx-1].Bot {
+		(*s)[idx-1].Bot = e + 1
 		return
 	}
 	//assert(e == (*s)[idx-1].t - 1)
-	(*s)[idx-1].t = e
+	(*s)[idx-1].Top = e
 }
 
 // DeleteRange removes a range of elements from the set
@@ -40,7 +40,7 @@ func (s *Set[T]) DeleteRange(b, t T) {
 	// [b,t) may overlap zero or more spans or even be entirely within a span.
 	bIdx, tIdx := s.bsearch(b), s.bsearch(t)
 	//assert(bIdx >= 0 && bIdx <= len(*s) && tIdx >= 0 && tIdx <= len(*s))
-	if bIdx > 0 && b == (*s)[bIdx-1].b {
+	if bIdx > 0 && b == (*s)[bIdx-1].Bot {
 		bIdx-- // we don't need to keep any of the bottom Span
 	}
 	//if tIdx > 0 && t < (*s)[tIdx-1].t {
@@ -48,7 +48,7 @@ func (s *Set[T]) DeleteRange(b, t T) {
 	//}
 	if t == endMark {
 		tIdx = len(*s)
-	} else if tIdx > 0 && (t < (*s)[tIdx-1].t || (*s)[tIdx-1].t == endMark) {
+	} else if tIdx > 0 && (t < (*s)[tIdx-1].Top || (*s)[tIdx-1].Top == endMark) {
 		tIdx-- // we need to keep some of the top Span
 	}
 
@@ -61,8 +61,8 @@ func (s *Set[T]) DeleteRange(b, t T) {
 		// Split an existing span in two - insert a new span and adjust the ends
 		*s = append(*s, Span[T]{})
 		copy((*s)[bIdx:], (*s)[tIdx:])
-		(*s)[bIdx].b = t // bottom of above
-		(*s)[tIdx].t = b // top of below
+		(*s)[bIdx].Bot = t // bottom of above
+		(*s)[tIdx].Top = b // top of below
 		return
 	}
 
@@ -72,10 +72,10 @@ func (s *Set[T]) DeleteRange(b, t T) {
 	*s = (*s)[:len(*s)-(tIdx-bIdx)]
 
 	// Adjust the ends of kept adjacent Spans if necessary
-	if bIdx < len(*s) && (t > (*s)[bIdx].b || t == endMark) {
-		(*s)[bIdx].b = t
+	if bIdx < len(*s) && (t > (*s)[bIdx].Bot || t == endMark) {
+		(*s)[bIdx].Bot = t
 	}
-	if bIdx > 0 && (b < (*s)[bIdx-1].t || (*s)[bIdx-1].t == endMark) {
-		(*s)[bIdx-1].t = b
+	if bIdx > 0 && (b < (*s)[bIdx-1].Top || (*s)[bIdx-1].Top == endMark) {
+		(*s)[bIdx-1].Top = b
 	}
 }

@@ -1,7 +1,8 @@
-package rangeset // ATM we can't do external tests using from rangeset_test
+package rangeset_test
 
 import (
 	"context"
+	"github.com/andrewwphillips/rangeset"
 	"iter"
 	"testing"
 )
@@ -39,7 +40,7 @@ var traverseData = map[string]struct {
 // returns a Go 1.23 iterator) instead of the Iterator() method (which returns a channel).
 func TestGo1_23Iterator(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		var got []traverseType
 		for v := range in.Seq() { // use Go 1.23 range over function
 			got = append(got, v)
@@ -56,7 +57,7 @@ func TestGo1_23Iterator(t *testing.T) {
 
 // TestGo1_23IteratorStop is like TestIteratorCancel but using Seq method rather than Iterator() method
 func TestGo1_23IteratorStop(t *testing.T) {
-	in := Make[traverseType](7, 42, 73, 86, 99)
+	in := rangeset.Make[traverseType](7, 42, 73, 86, 99)
 	next, stop := iter.Pull(in.Seq())
 
 	v, ok := next()
@@ -70,7 +71,7 @@ func TestGo1_23IteratorStop(t *testing.T) {
 
 // TestGo1_23IteratorEnd is like TestGo1_23IteratorStop but does not stop the iteration
 func TestGo1_23IteratorEnd(t *testing.T) {
-	in := Make[traverseType](49)
+	in := rangeset.Make[traverseType](49)
 	next, stop := iter.Pull(in.Seq())
 	defer stop()
 
@@ -85,24 +86,24 @@ func TestGo1_23IteratorEnd(t *testing.T) {
 
 // TestSpansSeq is a simple test of the SpansSeq() method
 func TestSpansSeq(t *testing.T) {
-	in := NewFromRange(-1, 2)
+	in := rangeset.NewFromRange(-1, 2)
 	next, stop := iter.Pull(in.SpansSeq())
 	defer stop()
 
 	v, ok := next()
 	Assertf(t, ok, "TestSpansSeq: Expected first next() status to be true, got %v\n", ok)
-	Assertf(t, v == Span[int]{-1, 2}, "TestSpansSeq: Expected initial next() value to be {-1,2}, got %v\n", v)
+	Assertf(t, v == rangeset.Span[int]{-1, 2}, "TestSpansSeq: Expected initial next() value to be {-1,2}, got %v\n", v)
 
 	v, ok = next()
 	Assertf(t, !ok, "TestSpansSeq: Expected last next() status to be false, got %v\n", ok)
-	Assertf(t, v == Span[int]{}, "TestSpansSeq: Expected last next() value to be empty, got %v\n", v)
+	Assertf(t, v == rangeset.Span[int]{}, "TestSpansSeq: Expected last next() value to be empty, got %v\n", v)
 
 }
 
 // TestIterateMethod tests that Iterate calls the function on every element using opData.union set
 func TestIterateMethod(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		got := make([]traverseType, 0, in.Len())
 		in.Iterate(func(v traverseType) { got = append(got, v) })
 		values := in.Values()
@@ -118,7 +119,7 @@ func TestIterateMethod(t *testing.T) {
 // TestFilterNone tests the Filter method keeping all elements
 func TestFilterNone(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		origLen := in.Len()
 		in.Filter(func(v traverseType) bool { return true }) // keep all elts
 		Assertf(t, in.Len() == origLen, "FilterNone: %20s: expected %d elements remaining, got %d\n",
@@ -129,7 +130,7 @@ func TestFilterNone(t *testing.T) {
 // TestFilterAll tests the Filter method removing all elements
 func TestFilterAll(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		in.Filter(func(v traverseType) bool { return false }) // keep no elts
 		Assertf(t, in.Len() == 0, "FilterAll: %20s: expected no elements remaining, got %d\n",
 			name, in.Len())
@@ -139,7 +140,7 @@ func TestFilterAll(t *testing.T) {
 // TestFilterOdd tests the Filter method by removing all odd elements
 func TestFilterOdd(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		in.Filter(func(v traverseType) bool { return v%2 == 0 }) // keep even elts
 		Assertf(t, in.Len() == data.evenCount,
 			"FilterOdd: %20s: expected %d even elements remaining, got %d\n",
@@ -150,7 +151,7 @@ func TestFilterOdd(t *testing.T) {
 // TestFilterEven tests the Filter method by removing all even elements
 func TestFilterEven(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		origLen := in.Len()
 		in.Filter(func(v traverseType) bool { return v%2 != 0 }) // keep odd elts
 		Assertf(t, in.Len() == origLen-data.evenCount,
@@ -162,7 +163,7 @@ func TestFilterEven(t *testing.T) {
 // TestIteratorAll tests that the chan returned by the Iterator method sends all elements
 func TestIteratorAll(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
+		in, _ := rangeset.NewFromString[traverseType](data.in)
 		var got []traverseType
 		for v := range in.Iterator(context.Background()) {
 			got = append(got, v)
@@ -179,7 +180,7 @@ func TestIteratorAll(t *testing.T) {
 
 // TestIteratorCancel tests that cancelling an iteration stops sending elements and closes the chan
 func TestIteratorCancel(t *testing.T) {
-	in := Make[traverseType](7, 42, 73, 86, 99)
+	in := rangeset.Make[traverseType](7, 42, 73, 86, 99)
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := in.Iterator(ctx)
 	v, ok := <-ch
@@ -196,9 +197,9 @@ func TestIteratorCancel(t *testing.T) {
 // a set to a chan that is read into a new set, then checks that the sets are the same.
 func TestChanRoundTrip(t *testing.T) {
 	for name, data := range traverseData {
-		in, _ := NewFromString[traverseType](data.in)
-		var out Set[traverseType]
+		in, _ := rangeset.NewFromString[traverseType](data.in)
+		var out rangeset.Set[traverseType]
 		out.ReadAll(context.Background(), in.Iterator(context.Background()))
-		Assertf(t, Equal(in, out), "ChanRoundTrip: %12s: expected %v, got %v", name, in, out)
+		Assertf(t, rangeset.Equal(in, out), "ChanRoundTrip: %12s: expected %v, got %v", name, in, out)
 	}
 }
